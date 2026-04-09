@@ -49,6 +49,8 @@ export type ProfileResponse = {
     winRate: number;
     hotStreak: boolean;
     tierLabel: string;
+    emblemTier?: string;
+    displayLabel?: string;
   }>;
   featuredQueue: {
     queueType: string;
