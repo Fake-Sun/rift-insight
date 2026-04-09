@@ -7,6 +7,7 @@
   --muted: #9eb6ca;
   --blue: #1f8fff;
   --cyan: #24d2ff;
+  --violet: #7568ff;
   --red: #ff5b72;
   --green: #31d27c;
   --gold: #f7c948;
@@ -27,8 +28,10 @@ body {
   font-family: var(--font-barlow), sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(36, 210, 255, 0.16), transparent 28%),
-    radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 24%),
+    radial-gradient(circle at 8% 8%, rgba(36, 210, 255, 0.2), transparent 24%),
+    radial-gradient(circle at 92% 10%, rgba(117, 104, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 78% 24%, rgba(247, 201, 72, 0.12), transparent 18%),
+    radial-gradient(circle at 14% 72%, rgba(49, 210, 124, 0.08), transparent 18%),
     linear-gradient(180deg, #071320 0%, #091b29 46%, #06131f 100%);
   min-height: 100vh;
 }
@@ -111,7 +114,9 @@ p {
 .match-card {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
-  background: var(--panel);
+  background:
+    linear-gradient(180deg, rgba(18, 43, 63, 0.9), rgba(10, 29, 44, 0.92)),
+    var(--panel);
   border-radius: var(--radius);
 }
 
@@ -120,6 +125,9 @@ p {
   align-items: center;
   padding: 18px 24px;
   backdrop-filter: blur(16px);
+  background:
+    linear-gradient(90deg, rgba(36, 210, 255, 0.06), transparent 24%, transparent 76%, rgba(117, 104, 255, 0.08)),
+    linear-gradient(180deg, rgba(18, 43, 63, 0.92), rgba(10, 29, 44, 0.94));
 }
 
 .brand-lockup {
@@ -189,6 +197,10 @@ p {
   padding: 28px;
   gap: 24px;
   align-items: flex-end;
+  background:
+    radial-gradient(circle at top left, rgba(36, 210, 255, 0.12), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(117, 104, 255, 0.12), transparent 28%),
+    linear-gradient(140deg, rgba(10, 29, 44, 0.98), rgba(15, 39, 62, 0.9));
 }
 
 .hero-copy {
@@ -199,6 +211,7 @@ p {
   font-size: clamp(2rem, 5vw, 3.6rem);
   line-height: 0.95;
   max-width: 12ch;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
 }
 
 .hero-text {
@@ -230,8 +243,10 @@ p {
   flex: 1;
   padding: 22px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(247, 201, 72, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(24, 56, 82, 0.88), rgba(10, 28, 43, 0.94));
+  border: 1px solid rgba(146, 201, 255, 0.14);
 }
 
 .search-label {
@@ -258,18 +273,21 @@ input {
   padding: 15px 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 19, 31, 0.82);
+  background:
+    linear-gradient(180deg, rgba(4, 17, 29, 0.96), rgba(7, 24, 38, 0.9));
   color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 button {
   border: 0;
   border-radius: 16px;
   padding: 15px 20px;
-  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  background: linear-gradient(135deg, var(--gold), var(--cyan));
   color: #03111c;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 12px 30px rgba(36, 210, 255, 0.22);
 }
 
 button:disabled {
@@ -278,9 +296,10 @@ button:disabled {
 }
 
 .secondary-button {
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, rgba(117, 104, 255, 0.16), rgba(31, 143, 255, 0.1));
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(117, 104, 255, 0.26);
+  box-shadow: none;
 }
 
 .custom-select {
@@ -296,7 +315,8 @@ button:disabled {
   padding: 15px 42px 15px 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 19, 31, 0.82);
+  background:
+    linear-gradient(180deg, rgba(4, 17, 29, 0.96), rgba(7, 24, 38, 0.9));
   color: var(--text);
   position: relative;
   text-align: left;
@@ -343,7 +363,7 @@ button:disabled {
 
 .custom-select-option.active,
 .custom-select-option:hover {
-  background: linear-gradient(135deg, rgba(31, 143, 255, 0.22), rgba(36, 210, 255, 0.16));
+  background: linear-gradient(135deg, rgba(117, 104, 255, 0.24), rgba(36, 210, 255, 0.18));
   color: white;
 }
 
@@ -358,7 +378,7 @@ button:disabled {
 .filter-button {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(135deg, rgba(31, 143, 255, 0.1), rgba(117, 104, 255, 0.08));
   padding: 8px 12px;
   color: var(--text);
 }
@@ -413,7 +433,10 @@ button:disabled {
 }
 
 .glass {
-  background: linear-gradient(180deg, rgba(20, 58, 84, 0.98), rgba(12, 31, 47, 0.88));
+  background:
+    radial-gradient(circle at top left, rgba(36, 210, 255, 0.1), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(117, 104, 255, 0.1), transparent 22%),
+    linear-gradient(180deg, rgba(20, 58, 84, 0.98), rgba(12, 31, 47, 0.88));
 }
 
 .section-title {
@@ -498,8 +521,9 @@ button:disabled {
 .match-card,
 .stat-block {
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(182, 216, 255, 0.08);
 }
 
 .meta-item {
@@ -661,6 +685,7 @@ button:disabled {
   display: block;
   margin-top: 8px;
   font-size: 1.8rem;
+  color: #ffffff;
 }
 
 .controls-panel {
@@ -674,8 +699,8 @@ button:disabled {
 }
 
 .filter-button.active {
-  background: linear-gradient(135deg, rgba(31, 143, 255, 0.32), rgba(36, 210, 255, 0.22));
-  border-color: rgba(36, 210, 255, 0.5);
+  background: linear-gradient(135deg, rgba(247, 201, 72, 0.3), rgba(36, 210, 255, 0.22));
+  border-color: rgba(247, 201, 72, 0.38);
   color: white;
 }
 
@@ -685,11 +710,21 @@ button:disabled {
 }
 
 .match-card.win {
-  box-shadow: inset 4px 0 0 var(--green);
+  box-shadow:
+    inset 4px 0 0 var(--green),
+    0 18px 36px rgba(49, 210, 124, 0.08);
+  background:
+    linear-gradient(90deg, rgba(49, 210, 124, 0.08), transparent 16%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
 }
 
 .match-card.loss {
-  box-shadow: inset 4px 0 0 var(--red);
+  box-shadow:
+    inset 4px 0 0 var(--red),
+    0 18px 36px rgba(255, 91, 114, 0.08);
+  background:
+    linear-gradient(90deg, rgba(255, 91, 114, 0.08), transparent 16%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
 }
 
 .match-head {
@@ -707,7 +742,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(135deg, rgba(31, 143, 255, 0.14), rgba(36, 210, 255, 0.08));
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 0.82rem;
@@ -815,9 +850,9 @@ button:disabled {
   padding: 5px 9px;
   font-size: 0.76rem;
   font-weight: 700;
-  color: var(--cyan);
-  background: rgba(36, 210, 255, 0.1);
-  border: 1px solid rgba(36, 210, 255, 0.18);
+  color: #ffe6a8;
+  background: rgba(247, 201, 72, 0.12);
+  border: 1px solid rgba(247, 201, 72, 0.24);
 }
 
 .role-symbol {
@@ -826,8 +861,8 @@ button:disabled {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: rgba(36, 210, 255, 0.18);
-  color: #c9f6ff;
+  background: rgba(247, 201, 72, 0.24);
+  color: #fff5d0;
   font-size: 0.62rem;
   font-weight: 800;
 }
@@ -869,7 +904,7 @@ button:disabled {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  background: linear-gradient(135deg, var(--gold), var(--violet), var(--cyan));
 }
 
 .queue-badge {
@@ -878,7 +913,7 @@ button:disabled {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(247, 201, 72, 0.18), rgba(36, 210, 255, 0.14));
+  background: linear-gradient(135deg, rgba(247, 201, 72, 0.28), rgba(117, 104, 255, 0.18));
 }
 
 .meta-copy {
