@@ -1,23 +1,5 @@
 import type { Language, MatchRole } from "@/lib/types";
 
-export const quickProfiles = [
-  { gameName: "Fake Sun", tagLine: "Kite", region: "LA2" as const },
-  { gameName: "Faker", tagLine: "KR1", region: "KR" as const },
-  { gameName: "Keria", tagLine: "KR1", region: "KR" as const },
-  { gameName: "Canyon", tagLine: "KR1", region: "KR" as const }
-];
-
-export const laneOptions: Array<"All" | MatchRole> = ["All", "TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
-
-export const roleSymbols: Record<string, string> = {
-  TOP: "T",
-  JUNGLE: "J",
-  MIDDLE: "M",
-  BOTTOM: "A",
-  UTILITY: "S",
-  UNKNOWN: "?"
-};
-
 const queueLabels: Record<number, string> = {
   400: "Normal Draft",
   420: "Ranked Solo/Duo",
@@ -54,15 +36,20 @@ export const translations = {
     searchTitle: "Search a Riot ID",
     searchDesc: "Use game name, tag line, and region to load a live League profile.",
     loading: "Loading cached/live Riot data...",
+    searchingTitle: "Searching Riot profile",
+    searchingDesc: "Fetching account, ranked, mastery, and up to 30 recent matches. This can take a few seconds.",
     refreshing: "Refreshing live Riot data...",
     waiting: "Waiting for a live profile request.",
     loaded: "Loaded",
     refreshed: "Refreshed",
     from: "from",
     profileUnavailable: "Profile unavailable",
+    apiKeyMissing: "Riot API key is not configured on this deployment. Add RIOT_API_KEY to the server environment.",
+    apiKeyInvalid: "Riot API access was rejected. Check whether RIOT_API_KEY is valid, active, and authorized.",
+    apiRateLimited: "Riot API rate limit reached. Wait a moment before trying again.",
     topQueue: "Top Queue",
     winRate: "Win Rate",
-    recentForm: "Recent Form",
+    recentForm: "Recent Games",
     noGames: "No games",
     noRankedData: "No ranked data",
     noRankedDataDesc: "This player has no current ranked entries on this server.",
@@ -108,15 +95,20 @@ export const translations = {
     searchTitle: "Busca un Riot ID",
     searchDesc: "Usa nombre de juego, etiqueta y región para cargar un perfil de League en vivo.",
     loading: "Cargando datos en caché/en vivo de Riot...",
+    searchingTitle: "Buscando perfil de Riot",
+    searchingDesc: "Cargando cuenta, ranked, maestría y hasta 30 partidas recientes. Puede tardar unos segundos.",
     refreshing: "Actualizando datos en vivo de Riot...",
     waiting: "Esperando una solicitud de perfil en vivo.",
     loaded: "Perfil cargado",
     refreshed: "Perfil actualizado",
     from: "desde",
     profileUnavailable: "Perfil no disponible",
+    apiKeyMissing: "La clave de Riot API no está configurada en este deploy. Agrega RIOT_API_KEY al entorno del servidor.",
+    apiKeyInvalid: "Riot rechazó el acceso a la API. Revisa que RIOT_API_KEY sea válida, esté activa y autorizada.",
+    apiRateLimited: "Se alcanzó el límite de Riot API. Espera un momento antes de volver a intentar.",
     topQueue: "Mejor cola",
     winRate: "Win Rate",
-    recentForm: "Forma reciente",
+    recentForm: "Partidas recientes",
     noGames: "Sin partidas",
     noRankedData: "Sin datos ranked",
     noRankedDataDesc: "Este jugador no tiene entradas ranked actuales en este servidor.",

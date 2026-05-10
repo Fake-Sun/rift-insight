@@ -31,6 +31,21 @@ export async function GET(request: NextRequest) {
         ? String((error as { message?: string }).message || "Unexpected server error.")
         : "Unexpected server error.";
 
-    return NextResponse.json({ error: message }, { status });
+    const headers = new Headers();
+    if (
+      typeof error === "object" &&
+      error &&
+      "retryAfter" in error &&
+      Number((error as { retryAfter?: number }).retryAfter)
+    ) {
+      headers.set("Retry-After", String((error as { retryAfter?: number }).retryAfter));
+    }
+
+    const code =
+      typeof error === "object" && error && "code" in error
+        ? String((error as { code?: string }).code || "")
+        : "";
+
+    return NextResponse.json({ error: message, code }, { status, headers });
   }
 }

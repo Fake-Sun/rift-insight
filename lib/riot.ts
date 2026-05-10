@@ -3,7 +3,9 @@ import "server-only";
 import { ProfileResponse } from "@/lib/types";
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY || "";
-const MATCH_COUNT = 5;
+const MATCH_COUNT = 30;
+const MATCH_FETCH_BATCH_SIZE = 5;
+const MATCH_FETCH_BATCH_DELAY_MS = 350;
 const CACHE_TTL = {
   profile: 5 * 60 * 1000,
   account: 30 * 60 * 1000,
@@ -53,6 +55,10 @@ type ChampionCatalog = {
   spellByKey: Record<string, { id: string; key: string; name: string }>;
 };
 
+function normalizeChampionLookup(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export function isRiotConfigured() {
   return Boolean(RIOT_API_KEY);
 }
@@ -75,7 +81,11 @@ function setCached<T>(key: string, value: T, ttlMs: number): T {
   return value;
 }
 
-async function riotFetch<T>(url: string): Promise<T> {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function riotFetch<T>(url: string, attempt = 0): Promise<T> {
   const response = await fetch(url, {
     headers: {
       "X-Riot-Token": RIOT_API_KEY
@@ -95,8 +105,28 @@ async function riotFetch<T>(url: string): Promise<T> {
 
     const error = new Error(parsedMessage || bodyText || `Riot API error ${response.status}`) as Error & {
       statusCode?: number;
+      retryAfter?: number;
+      code?: string;
     };
     error.statusCode = response.status;
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) {
+      error.retryAfter = Number(retryAfter);
+    }
+    if (response.status === 403) {
+      error.code = "RIOT_API_FORBIDDEN";
+    } else if (response.status === 401) {
+      error.code = "RIOT_API_UNAUTHORIZED";
+    } else if (response.status === 429) {
+      error.code = "RIOT_API_RATE_LIMIT";
+    }
+
+    if (response.status === 429 && attempt < 2) {
+      const retryDelayMs = Math.max(1000, (error.retryAfter || 2) * 1000);
+      await sleep(retryDelayMs);
+      return riotFetch<T>(url, attempt + 1);
+    }
+
     throw error;
   }
 
@@ -118,6 +148,25 @@ async function riotFetchCached<T>(
 
   const value = await riotFetch<T>(url);
   return setCached(cacheKey, value, ttlMs);
+}
+
+async function mapInBatches<T, R>(
+  items: T[],
+  batchSize: number,
+  delayMs: number,
+  mapper: (item: T) => Promise<R>
+) {
+  const results: R[] = [];
+
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    results.push(...(await Promise.all(batch.map(mapper))));
+    if (index + batchSize < items.length) {
+      await sleep(delayMs);
+    }
+  }
+
+  return results;
 }
 
 async function riotFetchOptional<T>(
@@ -169,6 +218,9 @@ async function getChampionCatalog(): Promise<ChampionCatalog> {
     Object.values(championPayload.data).forEach((champion) => {
       championByKey[champion.key] = champion;
       championByName[champion.name.toLowerCase()] = champion;
+      championByName[champion.id.toLowerCase()] = champion;
+      championByName[normalizeChampionLookup(champion.name)] = champion;
+      championByName[normalizeChampionLookup(champion.id)] = champion;
     });
 
     Object.values(spellPayload.data).forEach((spell) => {
@@ -334,7 +386,7 @@ function computeSummary(matches: ProfileResponse["matches"]): ProfileResponse["s
     averageKillParticipation: `${Math.round(totals.kp / matches.length)}%`,
     averageVision: (totals.vision / matches.length).toFixed(1),
     recentForm: matches
-      .slice(0, 10)
+      .slice(0, 5)
       .map((match) => (match.win ? "W" : "L"))
       .join(" ")
   };
@@ -366,7 +418,9 @@ function computeChampionStats(matches: ProfileResponse["matches"], championCatal
 
   return [...grouped.values()]
     .map((entry) => {
-      const champion = championCatalog.championByName[entry.name.toLowerCase()];
+      const champion =
+        championCatalog.championByName[entry.name.toLowerCase()] ||
+        championCatalog.championByName[normalizeChampionLookup(entry.name)];
       return {
         name: entry.name,
         games: entry.games,
@@ -416,8 +470,9 @@ export async function getLiveProfile(
   if (!RIOT_API_KEY) {
     const error = new Error(
       "Missing RIOT_API_KEY. Add it to your environment before searching live profiles."
-    ) as Error & { statusCode?: number };
+    ) as Error & { statusCode?: number; code?: string };
     error.statusCode = 500;
+    error.code = "RIOT_API_KEY_MISSING";
     throw error;
   }
 
@@ -458,8 +513,11 @@ export async function getLiveProfile(
     )
   ]);
 
-  const rawMatches = await Promise.all(
-    matchIds.map((matchId) =>
+  const rawMatches = await mapInBatches(
+    matchIds,
+    MATCH_FETCH_BATCH_SIZE,
+    MATCH_FETCH_BATCH_DELAY_MS,
+    (matchId) =>
       riotFetchCached<{
         metadata: { matchId: string };
         info: {
@@ -475,7 +533,6 @@ export async function getLiveProfile(
         CACHE_TTL.match,
         options
       )
-    )
   );
 
   const matches: ProfileResponse["matches"] = rawMatches
@@ -488,7 +545,10 @@ export async function getLiveProfile(
       const teamKills = match.info.participants
         .filter((entry) => entry.teamId === participant.teamId)
         .reduce((total, entry) => total + Number(entry.kills || 0), 0);
-      const champion = championCatalog.championByName[String(participant.championName).toLowerCase()];
+      const championName = String(participant.championName || "Unknown");
+      const champion =
+        championCatalog.championByName[championName.toLowerCase()] ||
+        championCatalog.championByName[normalizeChampionLookup(championName)];
       const spell1 = championCatalog.spellByKey[String(participant.summoner1Id || "")];
       const spell2 = championCatalog.spellByKey[String(participant.summoner2Id || "")];
       const gameDurationMinutes = Math.max(1, match.info.gameDuration / 60);
@@ -500,7 +560,7 @@ export async function getLiveProfile(
       return {
         matchId: match.metadata.matchId,
         queueId: match.info.queueId,
-        championName: String(participant.championName || "Unknown"),
+        championName,
         championIcon: champion ? championIconUrl(championCatalog.version, champion.id) : "",
         role: normalizeRole(participant),
         win: Boolean(participant.win),
@@ -547,19 +607,16 @@ export async function getLiveProfile(
     })
     .filter(Boolean) as ProfileResponse["matches"];
 
-  const encryptedSummonerId = summoner.id || matches.find((match) => match.summonerId)?.summonerId || "";
-  const leagueEntries = encryptedSummonerId
-    ? await riotFetchOptional<Array<Record<string, unknown>>>(
-        `https://${region.toLowerCase()}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(encryptedSummonerId)}`,
-        [],
-        {
-          ignoreStatuses: [403, 404],
-          cacheKey: `league:${region}:${encryptedSummonerId}`.toLowerCase(),
-          ttlMs: CACHE_TTL.league,
-          forceRefresh: options.forceRefresh
-        }
-      )
-    : [];
+  const leagueEntries = await riotFetchOptional<Array<Record<string, unknown>>>(
+    `https://${region.toLowerCase()}.api.riotgames.com/lol/league/v4/entries/by-puuid/${encodeURIComponent(account.puuid)}`,
+    [],
+    {
+      ignoreStatuses: [403, 404],
+      cacheKey: `league:${region}:${account.puuid}`.toLowerCase(),
+      ttlMs: CACHE_TTL.league,
+      forceRefresh: options.forceRefresh
+    }
+  );
 
   const { ranked, featuredQueue: rankedFeaturedQueue } = summarizeRanked(leagueEntries);
   const featuredQueue = rankedFeaturedQueue || deriveFeaturedQueueFromMatches(matches);

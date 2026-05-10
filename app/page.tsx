@@ -1,5 +1,5 @@
-import { RiftInsightApp } from "@/components/rift-insight-app";
+import { RiftInsightFeature } from "@/features/rift-insight";
 
 export default function HomePage() {
-  return <RiftInsightApp />;
+  return <RiftInsightFeature />;
 }

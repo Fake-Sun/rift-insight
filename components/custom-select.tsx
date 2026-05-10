@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type SelectOption<T extends string> = {
   label: string;
@@ -18,49 +25,22 @@ export function CustomSelect<T extends string>({
   options: SelectOption<T>[];
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
   const selected = options.find((option) => option.value === value);
 
-  useEffect(() => {
-    function handleClick(event: MouseEvent) {
-      if (!ref.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, []);
-
   return (
-    <div className={`custom-select ${className || ""}`} ref={ref}>
-      <button
-        type="button"
-        className="custom-select-trigger"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-      >
-        {selected?.label}
-      </button>
-      {open ? (
-        <div className="custom-select-menu" role="listbox">
+    <div className={cn("w-full", className)}>
+      <Select value={value} onValueChange={(nextValue) => onChange(nextValue as T)}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={selected?.label || options[0]?.label} />
+        </SelectTrigger>
+        <SelectContent>
           {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              className={`custom-select-option ${value === option.value ? "active" : ""}`}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-            >
+            <SelectItem key={option.value} value={option.value}>
               {option.label}
-            </button>
+            </SelectItem>
           ))}
-        </div>
-      ) : null}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
