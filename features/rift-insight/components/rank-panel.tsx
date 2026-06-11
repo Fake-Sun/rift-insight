@@ -21,7 +21,7 @@ export function RankPanel({ profile, language }: { profile: ProfileResponse | nu
           <div className="grid gap-3">
             {profile.ranked.map((entry) => (
               <div key={entry.queueType} className="grid min-w-0 gap-2 rounded-xl border  border-white/10 bg-white/[0.02] p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{entry.queueLabel}</p>
+                <p className="text-xs font-semibold leading-5 text-slate-300">{entry.queueLabel}</p>
                 <div className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-start gap-3">
                   <RankMedal
                     tier={entry.emblemTier || "UNRANKED"}

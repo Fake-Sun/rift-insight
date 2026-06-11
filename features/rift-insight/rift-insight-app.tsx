@@ -57,7 +57,9 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
     const targetHref = buildProfileHref(nextLookup);
 
     if (targetHref === currentUrl) {
-      void fetchProfile({ quick: nextLookup });
+      void fetchProfile({ quick: nextLookup }).catch((error) => {
+        console.error("Profile fetch failed:", error);
+      });
       return;
     }
 
@@ -69,7 +71,9 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
   }
 
   function handleRefreshLive() {
-    void fetchProfile({ forceRefresh: true, quick: { gameName, tagLine, region } });
+    void fetchProfile({ forceRefresh: true, quick: { gameName, tagLine, region } }).catch((error) => {
+      console.error("Profile refresh failed:", error);
+    });
   }
 
   return (

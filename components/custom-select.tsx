@@ -54,7 +54,7 @@ export function CustomSelect<T extends string>({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={selectId}
-        className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-white/10 bg-slate-950 px-3 py-2 text-left text-sm text-slate-50 shadow-sm transition-colors hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-300/50"
+        className="flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-white/10 bg-slate-950 px-3 py-2 text-left text-sm text-slate-50 shadow-sm transition-colors hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-300/50"
         onClick={() => setOpen((current) => !current)}
       >
         <span className="min-w-0 truncate">{selected?.label}</span>
@@ -77,7 +77,7 @@ export function CustomSelect<T extends string>({
                 role="option"
                 aria-selected={active}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm transition-colors hover:bg-white/8 focus:bg-white/8 focus:outline-none",
+                  "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm transition-colors hover:bg-white/8 focus:bg-white/8 focus:outline-none",
                   active ? "text-white" : "text-slate-300"
                 )}
                 onClick={() => {

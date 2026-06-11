@@ -12,6 +12,18 @@ type ApiErrorPayload = {
   code?: string;
 };
 
+function readableErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return fallback;
+}
+
 export function useRiftInsightState(initialLookup?: { gameName: string; tagLine: string; region: Region }) {
   const [language, setLanguage] = useState<Language>("en");
   const [gameName, setGameName] = useState(initialLookup?.gameName ?? defaultProfile.gameName);
@@ -47,7 +59,9 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
     setGameName(initialLookup.gameName);
     setTagLine(initialLookup.tagLine);
     setRegion(initialLookup.region);
-    void fetchProfile({ quick: initialLookup });
+    void fetchProfile({ quick: initialLookup }).catch((error) => {
+      console.error("Initial profile fetch failed:", error);
+    });
   }, [initialLookup?.gameName, initialLookup?.region, initialLookup?.tagLine]);
 
   const filteredMatches = useMemo(() => {
@@ -73,7 +87,9 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
       if (forceRefresh) params.set("refresh", "1");
 
       const response = await fetch(`/api/profile?${params.toString()}`);
-      const payload = (await response.json()) as ProfileResponse | ApiErrorPayload;
+      const payload = (await response.json().catch(() => ({
+        error: "Failed to load profile."
+      }))) as ProfileResponse | ApiErrorPayload;
 
       if (!response.ok || "error" in payload) {
         const errorPayload = ("error" in payload ? payload : { error: "Failed to load profile." }) as ApiErrorPayload;
@@ -87,7 +103,12 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
           message = t("apiRateLimited");
         }
 
-        throw new Error(message);
+        setProfile(null);
+        setStatus({
+          message,
+          type: "error"
+        });
+        return;
       }
 
       setProfile(payload);
@@ -98,7 +119,7 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
     } catch (error) {
       setProfile(null);
       setStatus({
-        message: error instanceof Error ? error.message : t("profileUnavailable"),
+        message: readableErrorMessage(error, t("profileUnavailable")),
         type: "error"
       });
     } finally {

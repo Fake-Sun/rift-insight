@@ -22,7 +22,7 @@ export function MatchCard({ language, match }: MatchCardProps) {
       )}
     >
       <div className="grid min-w-0 gap-1.5 border-b border-white/6 pb-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{queueLabelFor(language, match.queueId)}</p>
+        <p className="text-xs font-semibold leading-5 text-slate-300">{queueLabelFor(language, match.queueId)}</p>
         <h4 className="min-w-0 truncate text-base font-semibold leading-5 text-white">
           {match.championName}
           <span className="text-slate-400"> • {laneLabel(language, match.role)}</span>
