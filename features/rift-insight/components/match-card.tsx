@@ -21,21 +21,24 @@ export function MatchCard({ language, match }: MatchCardProps) {
           : "border-rose-500/20"
       )}
     >
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-5">
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:gap-3">
-            <p className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-slate-500">{queueLabelFor(language, match.queueId)}</p>
-            <h4 className="min-w-0 truncate text-base font-semibold text-white">{match.championName} • {laneLabel(language, match.role)}</h4>
-            <p className="shrink-0 text-sm text-slate-400 xl:ml-auto">
-              {new Date(match.gameEndTimestamp).toLocaleString(language === "es-LATAM" ? "es-AR" : "en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit"
-              })}
-            </p>
-          </div>
+      <div className="grid min-w-0 gap-1.5 border-b border-white/6 pb-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{queueLabelFor(language, match.queueId)}</p>
+        <h4 className="min-w-0 truncate text-base font-semibold leading-5 text-white">
+          {match.championName}
+          <span className="text-slate-400"> • {laneLabel(language, match.role)}</span>
+        </h4>
+        <p className="text-sm text-slate-400 sm:text-right">
+          {new Date(match.gameEndTimestamp).toLocaleString(language === "es-LATAM" ? "es-AR" : "en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+          })}
+        </p>
+      </div>
 
+      <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-5">
+        <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <Avatar className="h-10 w-10 rounded-md border border-white/10">
@@ -76,7 +79,7 @@ export function MatchCard({ language, match }: MatchCardProps) {
           </div>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-[220px_132px] xl:items-center xl:self-center">
+        <div className="grid gap-3 xl:grid-cols-[340px_132px] xl:items-center xl:self-center">
           <div className="grid min-w-0 grid-cols-5 gap-1.5">
             <StatBlock label="CSPM" value={match.csPerMinute} detail={`${match.cs} CS`} />
             <StatBlock label="KP" value={`${match.killParticipation}%`} />

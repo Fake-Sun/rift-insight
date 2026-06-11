@@ -76,7 +76,7 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
     <div className="min-h-screen bg-[#020817] text-slate-50">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.08),transparent_32%)]" />
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <Card className="overflow-visible">
+        <Card className="relative z-50 overflow-visible">
           <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-lg border border-white/10 bg-slate-900 text-sm font-semibold text-white">
@@ -103,7 +103,7 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
           </CardContent>
         </Card>
 
-        <Card id="summoner" className="overflow-visible">
+        <Card id="summoner" className="relative z-20 overflow-visible">
           <CardContent className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,420px)] lg:items-start">
             <div className="space-y-4">
               <SectionLabel>{t("heroEyebrow")}</SectionLabel>
@@ -130,10 +130,38 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
               </CardHeader>
               <CardContent className="space-y-4 p-5 pt-0">
                 <div className="grid gap-3 md:grid-cols-[1.35fr_1fr_110px]">
-                  <Input value={gameName} onChange={(event) => setGameName(event.target.value)} placeholder={t("gameName")} required />
-                  <Input value={tagLine} onChange={(event) => setTagLine(event.target.value)} placeholder={t("tagLine")} required />
-                  <CustomSelect className="w-full" value={region} onChange={setRegion} options={regionOptions} />
+                  <label className="grid gap-1.5">
+                    <span className="text-xs font-medium text-slate-300">{t("gameName")}</span>
+                    <Input
+                      value={gameName}
+                      onChange={(event) => setGameName(event.target.value)}
+                      placeholder="Fake Sun"
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-1.5">
+                    <span className="text-xs font-medium text-slate-300">{t("tagLine")}</span>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                        #
+                      </span>
+                      <Input
+                        value={tagLine}
+                        onChange={(event) => setTagLine(event.target.value.replace(/^#/, ""))}
+                        placeholder="Kite"
+                        className="pl-7"
+                        required
+                      />
+                    </div>
+                  </label>
+                  <div className="grid gap-1.5">
+                    <span className="text-xs font-medium text-slate-300">{t("server")}</span>
+                    <CustomSelect className="w-full" value={region} onChange={setRegion} options={regionOptions} />
+                  </div>
                 </div>
+                <p className="text-xs leading-5 text-slate-400">
+                  {t("riotIdHelpPrefix")} <span className="font-medium text-slate-200">Game Name#Tag</span>, {t("riotIdHelpExample")} <span className="font-medium text-slate-200">Fake Sun#Kite</span>.
+                </p>
 
                 <div className="flex flex-wrap gap-3">
                   <Button disabled={loading} onClick={handleLoadProfile}>
