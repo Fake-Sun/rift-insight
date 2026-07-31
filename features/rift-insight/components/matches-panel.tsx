@@ -5,7 +5,7 @@ import { EmptyState } from "@/features/rift-insight/components/empty-state";
 import { MatchCard } from "@/features/rift-insight/components/match-card";
 import { SectionLabel } from "@/features/rift-insight/components/section-label";
 import { laneOptions } from "@/features/rift-insight/display";
-import type { Language, MatchRole, ProfileResponse } from "@/lib/types";
+import type { Language, MatchRole, ProfileResponse, Region } from "@/lib/types";
 
 type MatchesPanelProps = {
   profile: ProfileResponse | null;
@@ -47,7 +47,7 @@ export function MatchesPanel({
           <TabsContent value={lane} className="mt-0">
             <div className="grid gap-3">
               {profile ? laneMatches.length ? laneMatches.map((match) => (
-                <MatchCard key={match.matchId} language={language} match={match} />
+                <MatchCard key={match.matchId} language={language} match={match} region={profile.profile.region as Region} />
               )) : <EmptyState title={t("noMatchesLane")} description={t("noMatchesLaneDesc")} /> : null}
             </div>
           </TabsContent>

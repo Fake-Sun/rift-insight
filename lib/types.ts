@@ -29,6 +29,24 @@ export type MatchSpell = {
   icon: string;
 };
 
+export type MatchParticipant = {
+  puuid: string;
+  teamId: number;
+  riotId: string;
+  gameName: string;
+  tagLine: string;
+  championName: string;
+  championIcon: string;
+  role: MatchRole;
+  win: boolean;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kda: string;
+  damage: number;
+  items: MatchItem[];
+};
+
 export type ProfileResponse = {
   profile: {
     gameName: string;
@@ -101,6 +119,7 @@ export type ProfileResponse = {
     takenPerMinute: number;
     spells: MatchSpell[];
     items: MatchItem[];
+    participants: MatchParticipant[];
     timeline: TimelineSeries;
   }>;
   summary: {

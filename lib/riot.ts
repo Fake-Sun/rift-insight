@@ -274,6 +274,18 @@ function itemIconUrl(version: string, itemId: number) {
   return `https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`;
 }
 
+function participantIdentity(participant: Record<string, unknown>) {
+  const gameName =
+    String(participant.riotIdGameName || participant.gameName || participant.summonerName || "").trim();
+  const tagLine = String(participant.riotIdTagline || participant.riotIdTagLine || participant.tagLine || "").trim();
+
+  return {
+    gameName,
+    tagLine,
+    riotId: gameName && tagLine ? `${gameName}#${tagLine}` : gameName || "Unknown player"
+  };
+}
+
 function summarizeRanked(entries: Array<Record<string, unknown>>) {
   const ranked = entries.map((entry) => {
     const wins = Number(entry.wins || 0);
@@ -556,6 +568,45 @@ export async function getLiveProfile(
       const totalDamageDealt = Number(participant.totalDamageDealtToChampions || 0);
       const totalDamageTaken = Number(participant.totalDamageTaken || 0);
       const goldEarned = Number(participant.goldEarned || 0);
+      const participants = match.info.participants.map((entry) => {
+        const entryChampionName = String(entry.championName || "Unknown");
+        const entryChampion =
+          championCatalog.championByName[entryChampionName.toLowerCase()] ||
+          championCatalog.championByName[normalizeChampionLookup(entryChampionName)];
+        const entryKills = Number(entry.kills || 0);
+        const entryDeaths = Number(entry.deaths || 0);
+        const entryAssists = Number(entry.assists || 0);
+        const identity = participantIdentity(entry);
+
+        return {
+          puuid: String(entry.puuid || ""),
+          teamId: Number(entry.teamId || 0),
+          riotId: identity.riotId,
+          gameName: identity.gameName,
+          tagLine: identity.tagLine,
+          championName: entryChampionName,
+          championIcon: entryChampion ? championIconUrl(championCatalog.version, entryChampion.id) : "",
+          role: normalizeRole(entry),
+          win: Boolean(entry.win),
+          kills: entryKills,
+          deaths: entryDeaths,
+          assists: entryAssists,
+          kda: ((entryKills + entryAssists) / Math.max(1, entryDeaths)).toFixed(2),
+          damage: Number(entry.totalDamageDealtToChampions || 0),
+          items: [
+            Number(entry.item0 || 0),
+            Number(entry.item1 || 0),
+            Number(entry.item2 || 0),
+            Number(entry.item3 || 0),
+            Number(entry.item4 || 0),
+            Number(entry.item5 || 0),
+            Number(entry.item6 || 0)
+          ].map((itemId) => ({
+            id: itemId,
+            icon: itemId ? itemIconUrl(championCatalog.version, itemId) : ""
+          }))
+        };
+      });
 
       return {
         matchId: match.metadata.matchId,
@@ -600,6 +651,7 @@ export async function getLiveProfile(
           id: itemId,
           icon: itemId ? itemIconUrl(championCatalog.version, itemId) : ""
         })),
+        participants,
         timeline: {
           kp: []
         }
