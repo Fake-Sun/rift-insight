@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MetricValue } from "@/features/rift-insight/components/metric-value";
 import { Separator } from "@/components/ui/separator";
 import { getTranslator } from "@/components/translations";
@@ -7,7 +8,17 @@ import { RankMedal } from "@/features/rift-insight/components/rank-medal";
 import { cn } from "@/lib/utils";
 import type { Language, ProfileResponse } from "@/lib/types";
 
-export function ProfileCard({ profile, language }: { profile: ProfileResponse; language: Language }) {
+export function ProfileCard({
+  profile,
+  language,
+  loading,
+  onRefresh
+}: {
+  profile: ProfileResponse;
+  language: Language;
+  loading: boolean;
+  onRefresh: () => void;
+}) {
   const t = getTranslator(language);
   const recentTokens = profile.summary.recentForm.split(" ").filter(Boolean);
   const emblemTier = profile.featuredQueue?.emblemTier || "UNRANKED";
@@ -26,10 +37,15 @@ export function ProfileCard({ profile, language }: { profile: ProfileResponse; l
         <Badge variant="subtle" className="px-3 py-1.5 text-amber-200">Lvl {profile.profile.summonerLevel}</Badge>
       </div>
 
-      <div className="min-w-0 space-y-1">
-        <h3 className="font-[family:var(--font-space-grotesk)] text-2xl font-semibold text-white">
-          {profile.profile.gameName} <span className="text-slate-300">#{profile.profile.tagLine}</span>
-        </h3>
+      <div className="min-w-0 space-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h3 className="min-w-0 font-[family:var(--font-space-grotesk)] text-2xl font-semibold text-white">
+            {profile.profile.gameName} <span className="text-slate-300">#{profile.profile.tagLine}</span>
+          </h3>
+          <Button type="button" variant="secondary" size="sm" disabled={loading} onClick={onRefresh}>
+            {t("refreshLive")}
+          </Button>
+        </div>
         <p className="text-sm text-slate-400">{profile.profile.region}</p>
       </div>
 

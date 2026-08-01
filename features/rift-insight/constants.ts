@@ -47,6 +47,6 @@ export const regionOptions: SelectOption<Region>[] = [
 }));
 
 export const languageOptions: SelectOption<Language>[] = [
-  { value: "en", label: "English" },
-  { value: "es-LATAM", label: "Español LATAM" }
+  { value: "en", label: "English", imageSrc: "/flags/union-jack.png", imageAlt: "United Kingdom flag" },
+  { value: "es-LATAM", label: "Español LATAM", imageSrc: "/flags/spain.png", imageAlt: "Spain flag" }
 ];

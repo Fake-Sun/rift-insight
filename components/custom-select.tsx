@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 export type SelectOption<T extends string> = {
   label: string;
   value: T;
+  imageSrc?: string;
+  imageAlt?: string;
 };
 
 export function CustomSelect<T extends string>({
@@ -57,7 +59,16 @@ export function CustomSelect<T extends string>({
         className="flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-white/10 bg-slate-950 px-3 py-2 text-left text-sm text-slate-50 shadow-sm transition-colors hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-sky-300/50"
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="min-w-0 truncate">{selected?.label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {selected?.imageSrc ? (
+            <img
+              src={selected.imageSrc}
+              alt={selected.imageAlt || ""}
+              className="h-3 w-[18px] shrink-0 rounded-[2px] object-cover"
+            />
+          ) : null}
+          <span className="min-w-0 truncate">{selected?.label}</span>
+        </span>
         <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform", open && "rotate-180")} />
       </button>
 
@@ -85,9 +96,16 @@ export function CustomSelect<T extends string>({
                   setOpen(false);
                 }}
               >
-                <span className="grid h-4 w-4 shrink-0 place-items-center">
-                  {active ? <Check className="h-4 w-4 text-sky-200" /> : null}
+                <span className="grid h-3.5 w-3.5 shrink-0 place-items-center">
+                  {active ? <Check className="h-3 w-3 text-sky-200" /> : null}
                 </span>
+                {option.imageSrc ? (
+                  <img
+                    src={option.imageSrc}
+                    alt={option.imageAlt || ""}
+                    className="h-3 w-[18px] shrink-0 rounded-[2px] object-cover"
+                  />
+                ) : null}
                 <span className="min-w-0 truncate">{option.label}</span>
               </button>
             );
