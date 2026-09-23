@@ -1,4 +1,12 @@
 node_modules
 .env
 .next
+.next-verify
 out
+.test-build
+.next-dev
+.env.local
+artifacts
+test-results
+playwright-report
+*.tsbuildinfo

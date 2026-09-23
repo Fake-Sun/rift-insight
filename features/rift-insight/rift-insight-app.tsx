@@ -2,38 +2,34 @@
 
 import type { FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
+import { AlertCircle, ArrowUpRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { CustomSelect } from "@/components/custom-select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { languageOptions, regionOptions } from "@/features/rift-insight/constants";
 import { InsightsPanel } from "@/features/rift-insight/components/insights-panel";
+import { LandingPage } from "@/features/rift-insight/components/landing-page";
 import { LoadingPanel } from "@/features/rift-insight/components/loading-panel";
 import { MasteryPanel } from "@/features/rift-insight/components/mastery-panel";
 import { MatchesPanel } from "@/features/rift-insight/components/matches-panel";
 import { ProfileCard } from "@/features/rift-insight/components/profile-card";
 import { RankPanel } from "@/features/rift-insight/components/rank-panel";
-import { SectionLabel } from "@/features/rift-insight/components/section-label";
+import { SiteHeader } from "@/features/rift-insight/components/site-header";
 import { SummaryPanel } from "@/features/rift-insight/components/summary-panel";
-import { EmptyState } from "@/features/rift-insight/components/empty-state";
 import { useRiftInsightState } from "@/features/rift-insight/hooks/use-rift-insight-state";
+import { getCopy } from "@/features/rift-insight/copy";
+import { defaultProfile } from "@/features/rift-insight/constants";
 import { buildProfileHref } from "@/features/rift-insight/routing";
-import { cn } from "@/lib/utils";
 import type { Region } from "@/lib/types";
 
-type RiftInsightFeatureProps = {
-  initialLookup?: {
-    gameName: string;
-    tagLine: string;
-    region: Region;
-  };
-};
+type Lookup = { gameName: string; tagLine: string; region: Region };
 
-export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
+export function RiftInsightFeature({
+  initialLookup,
+}: {
+  initialLookup?: Lookup;
+}) {
   const router = useRouter();
   const pathname = usePathname();
+  const state = useRiftInsightState(initialLookup);
   const {
     filteredMatches,
     fetchProfile,
@@ -50,173 +46,181 @@ export function RiftInsightFeature({ initialLookup }: RiftInsightFeatureProps) {
     setTagLine,
     status,
     t,
-    tagLine
-  } = useRiftInsightState(initialLookup);
-
-  const showDashboard = Boolean(profile) || loading;
+    tagLine,
+  } = state;
+  const c = getCopy(language);
   const currentUrl = initialLookup ? buildProfileHref(initialLookup) : pathname;
-
-  function navigateToProfile(nextLookup: { gameName: string; tagLine: string; region: Region }) {
-    const targetHref = buildProfileHref(nextLookup);
-
-    if (targetHref === currentUrl) {
-      void fetchProfile({ quick: nextLookup }).catch((error) => {
-        console.error("Profile fetch failed:", error);
-      });
-      return;
-    }
-
-    router.push(targetHref);
-  }
-
-  function handleLoadProfile() {
-    navigateToProfile({ gameName, tagLine, region });
-  }
-
-  function handleRefreshLive() {
-    void fetchProfile({ forceRefresh: true, quick: { gameName, tagLine, region } }).catch((error) => {
-      console.error("Profile refresh failed:", error);
-    });
-  }
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    handleLoadProfile();
+    const lookup = {
+      gameName: gameName.trim(),
+      tagLine: tagLine.trim(),
+      region,
+    };
+    if (!lookup.gameName || !lookup.tagLine) return;
+    const targetHref = buildProfileHref(lookup);
+    if (targetHref === currentUrl) void fetchProfile({ quick: lookup });
+    else router.push(targetHref);
+  }
+
+  function handleRefresh() {
+    const lookup = profile
+      ? {
+          gameName: profile.profile.gameName,
+          tagLine: profile.profile.tagLine,
+          region: profile.profile.region as Region,
+        }
+      : initialLookup;
+    if (lookup) void fetchProfile({ forceRefresh: true, quick: lookup });
   }
 
   return (
-    <div className="min-h-screen bg-[#020817] text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.08),transparent_32%)]" />
-      <div className="relative mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <Card className="relative z-50 overflow-visible">
-          <CardContent className="grid gap-4 p-4 xl:grid-cols-[auto_minmax(0,620px)_minmax(180px,1fr)] xl:items-center xl:gap-x-10">
-            <div className="flex items-center justify-between gap-4 xl:justify-start">
-              <Link href="/" aria-label="Go to Rift Insight home" className="inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-sky-300/50">
-                <Image
-                  src="/rift-insight-brand@2x.png"
-                  alt="Rift Insight"
-                  width={888}
-                  height={1432}
-                  className="h-20 w-auto object-contain sm:h-24 xl:h-28"
-                  priority
-                />
-              </Link>
-              <span className="sr-only">Rift Insight</span>
-            </div>
-
-            <form className="grid w-full max-w-[540px] justify-self-start gap-2 xl:ml-4 lg:grid-cols-[minmax(140px,1.25fr)_minmax(92px,0.75fr)_96px_auto] lg:items-end" onSubmit={handleSearchSubmit}>
-              <label className="grid gap-1.5">
-                <span className="text-xs font-medium text-slate-300">{t("gameName")}</span>
-                <Input
-                  value={gameName}
-                  onChange={(event) => setGameName(event.target.value)}
-                  placeholder="Fake Sun"
-                  required
-                />
-              </label>
-              <label className="grid gap-1.5">
-                <span className="text-xs font-medium text-slate-300">{t("tagLine")}</span>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
-                    #
-                  </span>
-                  <Input
-                    value={tagLine}
-                    onChange={(event) => setTagLine(event.target.value.replace(/^#/, ""))}
-                    placeholder="Kite"
-                    className="pl-7"
-                    required
-                  />
-                </div>
-              </label>
-              <div className="grid gap-1.5">
-                <span className="text-xs font-medium text-slate-300">{t("server")}</span>
-                <CustomSelect className="w-full" value={region} onChange={setRegion} options={regionOptions} />
-              </div>
-              <Button type="submit" size="sm" disabled={loading}>
-                {t("loadProfile")}
-              </Button>
-            </form>
-
-            <div className="flex flex-col gap-3 xl:items-end">
-              <nav className="flex flex-wrap items-center gap-4 text-sm text-slate-300 xl:justify-end">
-                <a className="transition-colors hover:text-white" href="#summoner">{t("navSummoner")}</a>
-                <a className="transition-colors hover:text-white" href="#champions">{t("navChampions")}</a>
-                <a className="transition-colors hover:text-white" href="#meta">{t("navMeta")}</a>
-              </nav>
-              <div className="flex items-center gap-3 rounded-md border border-white/10 bg-slate-950 px-3 py-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{t("language")}</span>
-                <div className="w-[162px]">
-                  <CustomSelect value={language} onChange={setLanguage} options={languageOptions} />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {!showDashboard ? (
-        <Card id="summoner" className="relative z-20 overflow-visible">
-          <CardContent className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,500px)] lg:items-center lg:p-8">
-            <div className="max-w-3xl space-y-5">
-              <SectionLabel>{t("heroEyebrow")}</SectionLabel>
-              <h2 className="font-[family:var(--font-space-grotesk)] text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
-                {t("heroTitle")}
-              </h2>
-              <p className="max-w-2xl text-base leading-7 text-slate-300">{t("heroText")}</p>
-              <div
-                className={cn(
-                  "max-w-xl rounded-md border px-4 py-3 text-sm",
-                  status.type === "success" && "border-emerald-400/30 bg-emerald-400/12 text-emerald-100",
-                  status.type === "error" && "border-rose-400/30 bg-rose-400/12 text-rose-100",
-                  status.type === "info" && "border-white/10 bg-slate-900 text-slate-200"
-                )}
+    <div className="site-atmosphere min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-[2000] rounded-md bg-primary p-3 text-primary-foreground focus:not-sr-only"
+      >
+        {c.overview}
+      </a>
+      <SiteHeader
+        gameName={gameName}
+        tagLine={tagLine}
+        region={region}
+        language={language}
+        loading={loading}
+        onGameName={setGameName}
+        onTagLine={setTagLine}
+        onRegion={setRegion}
+        onLanguage={setLanguage}
+        onSubmit={handleSearchSubmit}
+        onTestAccount={
+          initialLookup
+            ? undefined
+            : () => router.push(buildProfileHref(defaultProfile))
+        }
+      />
+      <main
+        id="main-content"
+        className={`mx-auto w-full px-4 pb-12 pt-6 sm:px-6 lg:px-8 ${initialLookup ? "max-w-[1500px]" : "max-w-[1720px]"}`}
+      >
+        {status.type === "error" ? (
+          <div
+            role="alert"
+            className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm"
+          >
+            <AlertCircle className="size-5 shrink-0 text-destructive" />
+            <p className="min-w-0 flex-1">{status.message}</p>
+            {initialLookup ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                onClick={handleRefresh}
               >
-                {status.message}
-              </div>
-            </div>
-
-            <div className="flex justify-center lg:justify-end">
-              <Image
-                src="/rift-insight-brand@2x.png"
-                alt="Rift Insight"
-                width={888}
-                height={1432}
-                className="h-72 w-auto object-contain sm:h-80 lg:h-[28rem]"
-                priority
+                {c.retry}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {!initialLookup ? (
+          <LandingPage language={language} />
+        ) : (
+          <div className="space-y-5">
+            <nav
+              aria-label="Breadcrumb"
+              className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
+            >
+              <Link href="/" className="hover:text-primary">
+                {c.home}
+              </Link>
+              <ChevronRight className="size-3" />
+              <span className="text-foreground">
+                {initialLookup.gameName}{" "}
+                <span className="text-muted-foreground">
+                  #{initialLookup.tagLine}
+                </span>
+              </span>
+            </nav>
+            {loading ? (
+              <LoadingPanel
+                title={t("searchingTitle")}
+                description={t("searchingDesc")}
               />
-            </div>
-          </CardContent>
-        </Card>
-        ) : null}
-
-        {loading ? <LoadingPanel title={t("searchingTitle")} description={t("searchingDesc")} /> : null}
-
-        {showDashboard ? (
-        <section className={cn("grid gap-5 xl:grid-cols-[350px_minmax(0,1fr)]", loading && "pointer-events-none opacity-70")}>
-          <aside className="grid content-start gap-5">
-            <Card>
-              <CardContent className="p-5">
-                {profile ? (
-                  <ProfileCard profile={profile} language={language} loading={loading} onRefresh={handleRefreshLive} />
-                ) : (
-                  <EmptyState title={t("searchTitle")} description={t("searchDesc")} />
-                )}
-              </CardContent>
-            </Card>
-            <RankPanel profile={profile} language={language} />
-            <MasteryPanel profile={profile} language={language} />
-          </aside>
-
-          <section className="grid min-w-0 gap-5">
-            <SummaryPanel profile={profile} language={language} />
-            <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <MatchesPanel profile={profile} language={language} lane={lane} onLaneChange={setLane} filteredMatches={filteredMatches} />
-              <InsightsPanel profile={profile} language={language} />
-            </div>
-          </section>
-        </section>
-        ) : null}
-      </div>
+            ) : null}
+            {profile ? (
+              <div className="reveal space-y-5" aria-busy={loading}>
+                <ProfileCard
+                  profile={profile}
+                  language={language}
+                  loading={loading}
+                  onRefresh={handleRefresh}
+                />
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                  <nav className="flex flex-wrap gap-5 text-sm font-medium">
+                    <a href="#match-history" className="text-primary">
+                      {c.overview}
+                    </a>
+                    <a
+                      href="#ranked"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {c.ranked}
+                    </a>
+                    <a
+                      href="#champions"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {c.picks}
+                    </a>
+                    <a
+                      href="#performance"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {c.insights}
+                    </a>
+                  </nav>
+                  <span className="text-xs text-muted-foreground">
+                    {profile.matches.length} {c.sample}
+                  </span>
+                </div>
+                <div className="profile-layout">
+                  <aside
+                    id="ranked"
+                    className="profile-sidebar grid min-w-0 content-start gap-4 sm:grid-cols-2 lg:grid-cols-1"
+                  >
+                    <RankPanel profile={profile} language={language} />
+                    <MasteryPanel profile={profile} language={language} />
+                  </aside>
+                  <div className="profile-history min-w-0 space-y-4">
+                    <SummaryPanel profile={profile} language={language} />
+                    <MatchesPanel
+                      profile={profile}
+                      language={language}
+                      lane={lane}
+                      onLaneChange={setLane}
+                      filteredMatches={filteredMatches}
+                    />
+                  </div>
+                  <div className="profile-insights min-w-0">
+                    <InsightsPanel profile={profile} language={language} />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </main>
+      <footer className="mx-auto flex max-w-[1720px] flex-col gap-3 border-t border-border px-4 py-7 text-xs text-muted-foreground sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <Link
+          href="/"
+          className="flex w-fit items-center gap-2 font-heading text-sm text-foreground"
+        >
+          Rift Insight
+          <ArrowUpRight className="size-3 text-primary" />
+        </Link>
+        <p className="max-w-2xl leading-5">{c.footer}</p>
+      </footer>
     </div>
   );
 }

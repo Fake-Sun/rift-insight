@@ -1,14 +1,26 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SectionLabel } from "@/features/rift-insight/components/section-label";
 
-export function LoadingPanel({ title, description }: { title: string; description: string }) {
+export function LoadingPanel({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
-    <Card>
+    <Card role="status" aria-live="polite">
       <CardHeader className="pb-3">
-        <SectionLabel>{title}</SectionLabel>
-        <CardTitle className="text-xl text-white">Fetching live Riot data</CardTitle>
-        <CardDescription className="max-w-3xl leading-6 text-slate-300">{description}</CardDescription>
+        <CardTitle className="text-xl text-foreground">{title}</CardTitle>
+        <CardDescription className="max-w-3xl leading-6 text-slate-300">
+          {description}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">

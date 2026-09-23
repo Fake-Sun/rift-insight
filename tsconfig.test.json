@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "noEmit": false,
+    "incremental": false,
+    "outDir": ".test-build",
+    "rootDir": "lib",
+    "plugins": []
+  },
+  "include": ["lib/match-analysis.ts", "lib/types.ts"],
+  "exclude": ["node_modules"]
+}

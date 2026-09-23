@@ -1,263 +1,256 @@
-import { useState } from "react";
-import Link from "next/link";
+import { useId, useState } from "react";
+import { ChevronDown, Clock3, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getTranslator, laneLabel, queueLabelFor } from "@/components/translations";
-import { StatBlock } from "@/features/rift-insight/components/stat-block";
-import { roleSymbols } from "@/features/rift-insight/display";
-import { buildProfileHref } from "@/features/rift-insight/routing";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  getTranslator,
+  laneLabel,
+  queueLabelFor,
+} from "@/components/translations";
+import { ItemBuild } from "./item-build";
+import {
+  InsightBadges,
+  MatchAnalysisDetails,
+  ScoreBadge,
+} from "./match-analysis";
+import { MatchParticipants } from "./match-participants";
+import { MatchRoster } from "./match-roster";
+import { StatBlock } from "./stat-block";
+import { getCopy } from "@/features/rift-insight/copy";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
-import type { Language, MatchParticipant, ProfileResponse, Region } from "@/lib/types";
+import type { Language, ProfileResponse, Region } from "@/lib/types";
+import styles from "./match-card.module.css";
 
-type MatchCardProps = {
+export function MatchCard({
+  language,
+  match,
+  region,
+  puuid,
+}: {
   language: Language;
   match: ProfileResponse["matches"][number];
   region: Region;
-};
-
-function formatDamage(value: number) {
-  return value >= 1000 ? `${Math.round(value / 100) / 10}k` : value.toLocaleString();
-}
-
-function teamLabel(teamId: number) {
-  if (teamId === 100) return "Blue Side";
-  if (teamId === 200) return "Red Side";
-  return `Team ${teamId}`;
-}
-
-function ParticipantRow({
-  participant,
-  maxDamage,
-  region
-}: {
-  participant: MatchParticipant;
-  maxDamage: number;
-  region: Region;
+  puuid: string;
 }) {
-  const damagePercent = Math.max(4, Math.round((participant.damage / Math.max(1, maxDamage)) * 100));
-  const profileHref =
-    participant.gameName && participant.tagLine
-      ? buildProfileHref({
-          gameName: participant.gameName,
-          tagLine: participant.tagLine,
-          region
-        })
-      : "";
-
-  return (
-    <div className="grid min-w-0 grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-white/8 bg-slate-950/70 p-2">
-      <Avatar className="h-8 w-8 rounded-md border border-white/10">
-        <AvatarImage src={participant.championIcon || undefined} alt={participant.championName} />
-        <AvatarFallback className="rounded-md bg-slate-900 text-[10px] font-semibold text-white">
-          {participant.championName.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          {profileHref ? (
-            <Link
-              href={profileHref}
-              className="min-w-0 truncate text-sm font-semibold leading-5 text-white underline-offset-4 transition-colors hover:text-sky-200 hover:underline"
-            >
-              {participant.riotId}
-            </Link>
-          ) : (
-            <p className="truncate text-sm font-semibold leading-5 text-white">{participant.riotId}</p>
-          )}
-          <span className="shrink-0 text-[11px] text-slate-500">{roleSymbols[participant.role] || "?"}</span>
-        </div>
-        <p className="truncate text-xs leading-4 text-slate-400">{participant.championName}</p>
-        <div className="mt-1.5 flex min-w-0 flex-wrap gap-1">
-          {participant.items.map((item, index) =>
-            item.icon ? (
-              <Avatar key={`${participant.puuid}-${item.id}-${index}`} className="h-5 w-5 rounded-[4px] border border-white/10">
-                <AvatarImage src={item.icon} alt={`Item ${item.id}`} />
-                <AvatarFallback className="rounded-[4px] bg-slate-900 text-[8px] text-white">
-                  {index + 1}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div
-                key={`${participant.puuid}-empty-${index}`}
-                className="h-5 w-5 rounded-[4px] border border-dashed border-white/10 bg-white/[0.03]"
-                aria-hidden="true"
-              />
-            )
-          )}
-        </div>
-      </div>
-
-      <div className="w-[112px] text-right">
-        <p className="text-xs font-semibold tabular-nums text-slate-100">
-          {participant.kills} / {participant.deaths} / {participant.assists}
-        </p>
-        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/8">
-          <div
-            className={cn("h-full rounded-full", participant.win ? "bg-emerald-300/80" : "bg-rose-300/80")}
-            style={{ width: `${damagePercent}%` }}
-          />
-        </div>
-        <p className="mt-1 text-[11px] font-medium tabular-nums text-slate-300">{formatDamage(participant.damage)}</p>
-      </div>
-    </div>
-  );
-}
-
-export function MatchCard({ language, match, region }: MatchCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
   const t = getTranslator(language);
-  const participants = match.participants || [];
-  const teams = [...new Set(participants.map((participant) => participant.teamId))].sort((left, right) => left - right);
-  const maxDamage = Math.max(...participants.map((participant) => participant.damage), 1);
-
-  function toggleExpanded() {
-    if (participants.length) {
-      setExpanded((current) => !current);
-    }
-  }
-
+  const c = getCopy(language);
+  const multiKills = [
+    "",
+    "",
+    c.doubleKill,
+    c.tripleKill,
+    c.quadraKill,
+    c.pentaKill,
+  ];
+  const date = new Date(match.gameEndTimestamp);
   return (
-    <article
-      className={cn(
-        "rounded-lg border bg-slate-950/70 p-3 shadow-sm transition-colors",
-        match.win
-          ? "border-emerald-500/20"
-          : "border-rose-500/20"
-      )}
-    >
-      <div className="grid min-w-0 gap-1.5 border-b border-white/6 pb-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
-        <p className="text-xs font-semibold leading-5 text-slate-300">{queueLabelFor(language, match.queueId)}</p>
-        <h4 className="min-w-0 truncate text-base font-semibold leading-5 text-white">
-          {match.championName}
-          <span className="text-slate-400"> • {laneLabel(language, match.role)}</span>
-        </h4>
-        <div className="flex items-center gap-3 sm:justify-end">
-          <p className="text-sm text-slate-400 sm:text-right">
-            {new Date(match.gameEndTimestamp).toLocaleString(language === "es-LATAM" ? "es-AR" : "en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit"
-            })}
-          </p>
-          {participants.length ? (
-            <button
-              type="button"
-              aria-expanded={expanded}
-              className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-white/20 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-300/50"
-              onClick={toggleExpanded}
-            >
-              {expanded ? t("hideDetails") : t("showDetails")}
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")} />
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-5">
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-10 w-10 rounded-md border border-white/10">
-                <AvatarImage src={match.championIcon || undefined} alt={match.championName} />
-                <AvatarFallback className="rounded-md bg-slate-900 text-sm font-medium text-white">
-                  {match.championName.slice(0, 2).toUpperCase()}
+    <Card className={cn(styles.card, match.win ? styles.win : styles.loss)}>
+      <article>
+        <div className={styles.compact}>
+          <div className={styles.result}>
+            <p className={styles.queue}>
+              {queueLabelFor(language, match.queueId)}
+            </p>
+            <strong className={styles.outcome}>
+              {match.win ? c.victory : c.defeat}
+            </strong>
+          </div>
+          <div className={styles.champion}>
+            <h4>{match.championName}</h4>
+            <div className={styles.portrait}>
+              <Avatar className={styles.championIcon}>
+                <AvatarImage
+                  src={match.championIcon || undefined}
+                  alt={match.championName}
+                />
+                <AvatarFallback>
+                  {match.championName.slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col gap-1">
+              <div className="grid gap-0.5">
                 {match.spells.map((spell) => (
-                  <Avatar key={spell.name} className="h-5 w-5 rounded-[4px] border border-white/10">
-                    <AvatarImage src={spell.icon} alt={spell.name} title={spell.name} />
-                    <AvatarFallback className="rounded-[4px] bg-slate-900 text-[8px] text-white">
-                      {spell.name.slice(0, 1)}
+                  <Avatar key={spell.name} className="size-[21px] rounded-sm">
+                    <AvatarImage
+                      src={spell.icon}
+                      alt={spell.name}
+                      title={spell.name}
+                    />
+                    <AvatarFallback className="rounded-sm text-[10px]">
+                      {spell.name[0]}
                     </AvatarFallback>
                   </Avatar>
                 ))}
               </div>
             </div>
-
-            <Badge variant="subtle" className="h-6 px-2.5 text-[11px]">
-              {match.kills} / {match.deaths} / {match.assists} • {match.kda} KDA
-            </Badge>
-            <Badge variant="secondary" className="h-6 gap-1.5 px-2">
-              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-white/10 px-1 text-[10px] leading-none">
-                {roleSymbols[match.role] || "?"}
-              </span>
+          </div>
+          <div className={styles.kda}>
+            <p>
+              {match.kills}
+              <span> / </span>
+              <span className="text-defeat">{match.deaths}</span>
+              <span> / </span>
+              {match.assists}
+            </p>
+            <span>
+              <strong>{match.kda}</strong> KDA
+            </span>
+            <span className={styles.role}>
               {laneLabel(language, match.role)}
-            </Badge>
-            <Badge variant="secondary" className="h-6 px-2">
-              {match.duration}
-            </Badge>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={match.win ? "success" : "destructive"}>{match.win ? "Win" : "Loss"}</Badge>
-            {match.largestMultiKill >= 2 ? <Badge variant="destructive" className="text-[11px]">{match.largestMultiKill}x kill</Badge> : null}
-          </div>
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-[340px_132px] xl:items-center xl:self-center">
-          <div className="grid min-w-0 grid-cols-5 gap-1.5">
-            <StatBlock label="CSPM" value={match.csPerMinute} detail={`${match.cs} CS`} />
-            <StatBlock label="KP" value={`${match.killParticipation}%`} />
-            <StatBlock label="DPM" value={match.damagePerMinute.toLocaleString()} detail={match.damage} />
-            <StatBlock label="DTPM" value={match.takenPerMinute.toLocaleString()} detail={match.totalDamageTaken} />
-            <StatBlock label="GPM" value={match.goldPerMinute.toLocaleString()} detail={match.gold} />
-          </div>
-
-          <div className="grid grid-cols-4 gap-1.5 border-t border-white/6 pt-3 xl:max-w-[132px] xl:grid-cols-4 xl:border-l xl:border-t-0 xl:pl-3 xl:pt-0">
-            {match.items.map((item, index) =>
-              item.icon ? (
-                <Avatar key={`${match.matchId}-${index}`} className="h-[28px] w-[28px] rounded-[4px] border border-white/10">
-                  <AvatarImage src={item.icon} alt={`Item ${item.id}`} />
-                  <AvatarFallback className="rounded-[4px] bg-slate-900 text-[8px] text-white">
-                    {index + 1}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <div key={`${match.matchId}-${index}`} className="h-[28px] w-[28px] rounded-[4px] border border-dashed border-white/10 bg-white/[0.03]" aria-hidden="true" />
-              )
-            )}
-          </div>
-        </div>
-      </div>
-
-      {expanded && participants.length ? (
-        <div className="mt-4 border-t border-white/6 pt-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h5 className="text-sm font-semibold text-white">{t("matchDetails")}</h5>
-            <div className="hidden grid-cols-[1fr_112px] gap-3 text-xs font-medium text-slate-500 sm:grid">
-              <span>{t("player")}</span>
-              <span className="text-right">KDA / {t("damage")}</span>
+          <dl className={styles.metrics}>
+            <div>
+              <dt>CS/min</dt>
+              <dd>{match.csPerMinute}</dd>
             </div>
+            <div>
+              <dt>KP</dt>
+              <dd>{match.killParticipation}%</dd>
+            </div>
+            <div>
+              <dt>DPM</dt>
+              <dd>{match.damagePerMinute.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <dl className={`${styles.metrics} ${styles.extraMetrics}`}>
+            <div>
+              <dt>GPM</dt>
+              <dd>{match.goldPerMinute.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt>DTPM</dt>
+              <dd>{match.takenPerMinute.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <div className={styles.build} aria-label={c.build}>
+            <ItemBuild
+              items={match.items}
+              compact
+              className={styles.itemGrid}
+            />
           </div>
-
-          <div className="grid gap-3 xl:grid-cols-2">
-            {teams.map((teamId) => (
-              <section key={teamId} className="min-w-0 space-y-2">
-                <div className="flex items-center justify-between rounded-md border border-white/8 bg-white/[0.02] px-3 py-2">
-                  <p className="text-xs font-semibold text-slate-300">{teamLabel(teamId)}</p>
-                  <Badge variant={participants.find((participant) => participant.teamId === teamId)?.win ? "success" : "destructive"}>
-                    {participants.find((participant) => participant.teamId === teamId)?.win ? "Win" : "Loss"}
-                  </Badge>
-                </div>
-                {participants
-                  .filter((participant) => participant.teamId === teamId)
-                  .map((participant) => (
-                    <ParticipantRow
-                      key={participant.puuid || `${teamId}-${participant.riotId}`}
-                      participant={participant}
-                      maxDamage={maxDamage}
-                      region={region}
-                    />
-                  ))}
-              </section>
-            ))}
+          <div className={styles.roster}>
+            <MatchRoster
+              participants={match.participants ?? []}
+              language={language}
+              puuid={puuid}
+            />
           </div>
+          <div className={styles.meta}>
+            <span>
+              <Clock3 size={11} aria-hidden="true" />
+              {match.duration}
+            </span>
+            <span aria-hidden="true">·</span>
+            <time
+              dateTime={date.toISOString()}
+              title={date.toLocaleString(language === "en" ? "en-US" : "es-AR")}
+            >
+              {date.toLocaleDateString(language === "en" ? "en-US" : "es-AR", {
+                month: "short",
+                day: "numeric",
+              })}
+            </time>
+            <span className={styles.metaStat}>{match.cs} CS</span>
+            <span
+              className={styles.metaStat}
+              title={c.vision}
+              aria-label={`${c.vision}: ${match.visionScore}`}
+            >
+              <Eye size={12} aria-hidden="true" />
+              {match.visionScore}
+            </span>
+          </div>
+          <div className={styles.feedback}>
+            {typeof match.analysis?.score === "number" ? (
+              <ScoreBadge
+                score={match.analysis.score}
+                language={language}
+                compact
+              />
+            ) : null}
+            {match.largestMultiKill >= 2 ? (
+              <Badge
+                variant="warning"
+                className="rounded-sm px-1.5 py-0.5 text-[10px]"
+              >
+                {multiKills[Math.min(5, match.largestMultiKill)]}
+              </Badge>
+            ) : null}
+            <InsightBadges
+              analysis={match.analysis}
+              language={language}
+              compact
+              limit={1}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={styles.detailsButton}
+            aria-expanded={expanded}
+            aria-label={expanded ? t("hideDetails") : t("showDetails")}
+            title={expanded ? t("hideDetails") : t("showDetails")}
+            aria-controls={detailsId}
+            onClick={() => setExpanded(!expanded)}
+          >
+            <ChevronDown
+              className={cn("transition-transform", expanded && "rotate-180")}
+            />
+          </Button>
         </div>
-      ) : null}
-    </article>
+        {expanded ? (
+          <div
+            id={detailsId}
+            className="@container space-y-4 border-t border-border bg-background/70 p-3 sm:p-4"
+          >
+            <div className="grid grid-cols-3 gap-1.5 @min-[480px]:grid-cols-5">
+              <StatBlock
+                label="CS/min"
+                value={match.csPerMinute}
+                detail={`${match.cs} CS`}
+              />
+              <StatBlock label="KP" value={`${match.killParticipation}%`} />
+              <StatBlock
+                label="DPM"
+                value={match.damagePerMinute.toLocaleString()}
+                detail={match.damage}
+              />
+              <StatBlock
+                label="DTPM"
+                value={match.takenPerMinute.toLocaleString()}
+                detail={match.totalDamageTaken}
+              />
+              <StatBlock
+                label="GPM"
+                value={match.goldPerMinute.toLocaleString()}
+                detail={match.gold}
+              />
+            </div>
+            {match.participants?.length ? (
+              <MatchParticipants
+                participants={match.participants}
+                region={region}
+                language={language}
+                puuid={puuid}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {c.insufficientData}
+              </p>
+            )}
+            <MatchAnalysisDetails
+              analysis={match.analysis}
+              language={language}
+            />
+          </div>
+        ) : null}
+      </article>
+    </Card>
   );
 }

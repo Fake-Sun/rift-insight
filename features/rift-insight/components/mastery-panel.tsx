@@ -1,44 +1,67 @@
+import { Medal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTranslator } from "@/components/translations";
 import { EmptyState } from "@/features/rift-insight/components/empty-state";
-import { SectionLabel } from "@/features/rift-insight/components/section-label";
+import { getCopy } from "@/features/rift-insight/copy";
 import type { Language, ProfileResponse } from "@/lib/types";
 
-export function MasteryPanel({ profile, language }: { profile: ProfileResponse | null; language: Language }) {
+export function MasteryPanel({
+  profile,
+  language,
+}: {
+  profile: ProfileResponse | null;
+  language: Language;
+}) {
   const t = getTranslator(language);
-
+  const c = getCopy(language);
   return (
-    <Card>
-      <CardHeader className="space-y-1 p-5">
-        <div className="space-y-1">
-          <SectionLabel>{t("championMastery")}</SectionLabel>
-          <CardTitle className="text-2xl text-white">{t("topMasteryPicks")}</CardTitle>
-        </div>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="border-b border-border px-3 py-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Medal className="size-4 text-primary" />
+          {c.mastery}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="p-5 pt-0">
-        <div className="grid gap-3">
+      <CardContent className="p-3">
+        <div className="divide-y divide-border">
           {profile?.mastery.length ? (
             profile.mastery.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Avatar className="h-11 w-11 rounded-xl border border-white/10">
-                    <AvatarImage src={entry.icon || undefined} alt={entry.name} />
-                    <AvatarFallback className="rounded-xl bg-sky-400/15 text-sm font-semibold text-white">
-                      {entry.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-white">{entry.name}</p>
-                    <p className="text-sm text-slate-400">{entry.points.toLocaleString()} mastery points</p>
+              <div
+                key={entry.id}
+                className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-2 py-2.5 first:pt-0 last:pb-0"
+              >
+                <Avatar className="size-8 rounded-full">
+                  <AvatarImage src={entry.icon || undefined} alt={entry.name} />
+                  <AvatarFallback className="rounded-md text-xs">
+                    {entry.name.slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <p className="text-sm font-semibold">{entry.name}</p>
+                    <Badge variant="subtle" className="text-[10px]">
+                      Lv {entry.level.toLocaleString()}
+                    </Badge>
                   </div>
+                  <p
+                    title={c.masteryPoints}
+                    className="mt-1 text-xs tabular-nums text-muted-foreground"
+                  >
+                    {entry.points.toLocaleString(
+                      language === "en" ? "en-US" : "es-AR",
+                    )}{" "}
+                    <span className="text-muted-foreground/70">pts</span>
+                  </p>
                 </div>
-                <Badge variant="subtle" className="min-w-14 justify-center px-3 py-1.5 text-amber-200">Lv {entry.level}</Badge>
               </div>
             ))
           ) : (
-            <EmptyState title={t("noMasteryData")} description={t("noMasteryDataDesc")} />
+            <EmptyState
+              title={t("noMasteryData")}
+              description={t("noMasteryDataDesc")}
+            />
           )}
         </div>
       </CardContent>

@@ -1,57 +1,79 @@
+import { Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getTranslator } from "@/components/translations";
+import { getTranslator, queueLabelFor } from "@/components/translations";
 import { EmptyState } from "@/features/rift-insight/components/empty-state";
 import { RankMedal } from "@/features/rift-insight/components/rank-medal";
-import { SectionLabel } from "@/features/rift-insight/components/section-label";
+import { getCopy } from "@/features/rift-insight/copy";
 import type { Language, ProfileResponse } from "@/lib/types";
 
-export function RankPanel({ profile, language }: { profile: ProfileResponse | null; language: Language }) {
+export function RankPanel({
+  profile,
+  language,
+}: {
+  profile: ProfileResponse | null;
+  language: Language;
+}) {
   const t = getTranslator(language);
-
+  const c = getCopy(language);
   return (
-    <Card>
-      <CardHeader className="space-y-1 p-5">
-        <div className="space-y-1">
-          <SectionLabel>{t("rankOverview")}</SectionLabel>
-          <CardTitle className="text-2xl text-white">{t("liveRankedProfile")}</CardTitle>
-        </div>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="border-b border-border px-3 py-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Trophy className="size-4 text-primary" />
+          {c.ranked}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 p-5 pt-0">
+      <CardContent className="divide-y divide-border p-0">
         {profile?.ranked.length ? (
-          <div className="grid gap-3">
-            {profile.ranked.map((entry) => (
-              <div key={entry.queueType} className="grid min-w-0 gap-2 rounded-xl border  border-white/10 bg-white/[0.02] p-4">
-                <p className="text-xs font-semibold leading-5 text-slate-300">{entry.queueLabel}</p>
-                <div className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-start gap-3">
+          profile.ranked.map((entry) => {
+            const apex = ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(
+              entry.tier,
+            );
+            return (
+              <div key={entry.queueType} className="p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                  {queueLabelFor(
+                    language,
+                    entry.queueType === "RANKED_SOLO_5x5" ? 420 : 440,
+                  )}
+                </p>
+                <div className="flex items-center gap-3">
                   <RankMedal
-                    tier={entry.emblemTier || "UNRANKED"}
-                    alt={entry.tier || "Unranked"}
-                    className="h-6 w-6 shrink-0 object-contain"
+                    tier={entry.emblemTier || entry.tier || "UNRANKED"}
+                    alt={entry.tier || t("unranked")}
+                    className="size-12 shrink-0 object-contain"
                   />
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                      <span className="text-base font-semibold leading-none text-white">
-                        {entry.tier}
-                      </span>
-                      <span className="inline-flex h-5 shrink-0 items-center rounded-sm border border-white/10 bg-slate-900 px-1.5 text-[10px] font-medium leading-none text-slate-300">
-                        {entry.rank}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span className="inline-flex items-center rounded-sm border border-white/8 bg-slate-950/60 px-2 py-1 font-medium tabular-nums text-slate-300">
-                        {entry.leaguePoints} LP
-                      </span>
-                      <span className="inline-flex items-center rounded-sm border border-white/8 bg-slate-950/60 px-2 py-1 font-medium tabular-nums text-slate-300">
-                        {entry.wins}W {entry.losses}L
-                      </span>
-                    </div>
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold capitalize">
+                      {entry.tier.toLowerCase()}
+                      {!apex && entry.rank ? ` ${entry.rank}` : ""}
+                    </p>
+                    <p className="mt-0.5 text-sm tabular-nums text-primary">
+                      {entry.leaguePoints.toLocaleString()}{" "}
+                      <span className="text-xs text-muted-foreground">LP</span>
+                    </p>
                   </div>
                 </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <p className="flex flex-wrap gap-2 tabular-nums">
+                    <span className="text-emerald-300">
+                      {entry.wins.toLocaleString()} W
+                    </span>
+                    <span className="text-muted-foreground">
+                      {entry.losses.toLocaleString()} L
+                    </span>
+                  </p>
+                  <Badge variant="subtle">{entry.winRate}% WR</Badge>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })
         ) : (
-          <EmptyState title={t("noRankedData")} description={t("noRankedDataDesc")} />
+          <EmptyState
+            title={t("noRankedData")}
+            description={t("noRankedDataDesc")}
+          />
         )}
       </CardContent>
     </Card>

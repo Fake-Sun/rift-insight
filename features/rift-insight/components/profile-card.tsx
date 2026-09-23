@@ -1,10 +1,8 @@
+import { RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MetricValue } from "@/features/rift-insight/components/metric-value";
-import { Separator } from "@/components/ui/separator";
 import { getTranslator } from "@/components/translations";
-import { RankMedal } from "@/features/rift-insight/components/rank-medal";
+import { getCopy } from "@/features/rift-insight/copy";
 import { cn } from "@/lib/utils";
 import type { Language, ProfileResponse } from "@/lib/types";
 
@@ -12,7 +10,7 @@ export function ProfileCard({
   profile,
   language,
   loading,
-  onRefresh
+  onRefresh,
 }: {
   profile: ProfileResponse;
   language: Language;
@@ -20,78 +18,76 @@ export function ProfileCard({
   onRefresh: () => void;
 }) {
   const t = getTranslator(language);
-  const recentTokens = profile.summary.recentForm.split(" ").filter(Boolean);
-  const emblemTier = profile.featuredQueue?.emblemTier || "UNRANKED";
-  const featuredLabel = profile.featuredQueue?.displayLabel || t("unranked");
-  const featuredDetail = profile.featuredQueue?.isFallback ? profile.featuredQueue.tierLabel : null;
-
+  const c = getCopy(language);
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <Avatar className="h-20 w-20 rounded-3xl border border-white/10 bg-slate-950/70">
-          <AvatarImage src={profile.profile.profileIcon || undefined} alt={profile.profile.gameName} />
-          <AvatarFallback className="rounded-3xl bg-sky-400/15 text-3xl font-bold text-white">
-            {profile.profile.gameName.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <Badge variant="subtle" className="px-3 py-1.5 text-amber-200">Lvl {profile.profile.summonerLevel}</Badge>
-      </div>
-
-      <div className="min-w-0 space-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="min-w-0 font-[family:var(--font-space-grotesk)] text-2xl font-semibold text-white">
-            {profile.profile.gameName} <span className="text-slate-300">#{profile.profile.tagLine}</span>
-          </h3>
-          <Button type="button" variant="secondary" size="sm" disabled={loading} onClick={onRefresh}>
+    <section className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5 py-2 sm:py-3">
+      <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+        <div className="relative shrink-0 pb-2">
+          <Avatar className="size-16 rounded-xl ring-1 ring-white/15 sm:size-20">
+            <AvatarImage
+              src={profile.profile.profileIcon || undefined}
+              alt={profile.profile.gameName}
+            />
+            <AvatarFallback>
+              {profile.profile.gameName.slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+          <span
+            title={c.level}
+            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 rounded border border-border bg-card px-2 text-xs font-semibold tabular-nums"
+          >
+            {profile.profile.summonerLevel.toLocaleString()}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <div className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-primary" />
+            {profile.profile.region}{" "}
+            <span className="text-muted-foreground/50">/</span> League of
+            Legends
+          </div>
+          <h1 className="overflow-wrap-anywhere text-2xl font-semibold tracking-tight sm:text-[32px]">
+            {profile.profile.gameName}{" "}
+            <span className="font-normal text-muted-foreground">
+              #{profile.profile.tagLine}
+            </span>
+          </h1>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-3 h-8 rounded-md border border-input text-xs"
+            disabled={loading}
+            onClick={onRefresh}
+          >
+            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
             {t("refreshLive")}
           </Button>
         </div>
-        <p className="text-sm text-slate-400">{profile.profile.region}</p>
       </div>
-
-      <Separator />
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t("topQueue")}</p>
-          <div className="mt-2 flex min-w-0 items-start gap-3">
-            <RankMedal tier={emblemTier} alt={featuredLabel} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white">{featuredLabel}</p>
-              {featuredDetail ? (
-                <p className="mt-1 text-xs leading-5 text-slate-400">
-                  {featuredDetail}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t("winRate")}</p>
-          <MetricValue value={`${profile.summary.winRate}%`} className="mt-2" />
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className="text-xs uppercase tracking-[0.18em] text-slate-400">{t("recentForm")}</span>
-          <div className="flex min-w-0 gap-1 overflow-x-auto">
-            {recentTokens.length ? recentTokens.map((token, index) => (
-              <span
-                key={`${token}-${index}`}
-                className={cn(
-                  "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full text-[10px] font-extrabold",
-                  token === "W" ? "border border-emerald-400 bg-emerald-400/90 text-emerald-50" : "border border-rose-400 bg-rose-400/90 text-rose-50"
-                )}
-              >
-                {token}
-              </span>
-            )) : <span className="text-sm text-slate-400">{t("noGames")}</span>}
-          </div>
+      <div className="flex items-center gap-3 self-end pb-1 sm:self-center">
+        <p className="text-xs text-muted-foreground">{t("recentForm")}</p>
+        <div className="flex gap-1">
+          {profile.matches.slice(0, 5).map((match) => (
+            <span
+              key={match.matchId}
+              title={match.win ? c.victory : c.defeat}
+              className={cn(
+                "grid size-6 place-items-center rounded-sm text-[11px] font-bold",
+                match.win
+                  ? "bg-victory/20 text-victory ring-1 ring-inset ring-victory/30"
+                  : "bg-defeat/20 text-defeat ring-1 ring-inset ring-defeat/30",
+              )}
+            >
+              {match.win ? "W" : "L"}
+            </span>
+          ))}
+          {!profile.matches.length ? (
+            <span className="text-sm text-muted-foreground">
+              {t("noGames")}
+            </span>
+          ) : null}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

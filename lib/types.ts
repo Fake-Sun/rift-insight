@@ -1,3 +1,5 @@
+import type { MatchAnalysis } from "./match-analysis";
+
 export type Language = "en" | "es-LATAM";
 
 export type Region =
@@ -94,6 +96,7 @@ export type ProfileResponse = {
   }>;
   matches: Array<{
     matchId: string;
+    analysis?: MatchAnalysis;
     queueId: number;
     championName: string;
     championIcon: string;

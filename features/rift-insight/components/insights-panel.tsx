@@ -1,78 +1,166 @@
+import { Compass, Lightbulb, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getTranslator } from "@/components/translations";
+import { getTranslator, laneLabel } from "@/components/translations";
 import { EmptyState } from "@/features/rift-insight/components/empty-state";
-import { SectionLabel } from "@/features/rift-insight/components/section-label";
-import type { Language, ProfileResponse } from "@/lib/types";
+import { getCopy, insightCopy } from "@/features/rift-insight/copy";
+import type { InsightId } from "@/lib/match-analysis";
+import type { Language, MatchRole, ProfileResponse } from "@/lib/types";
 
-export function InsightsPanel({ profile, language }: { profile: ProfileResponse | null; language: Language }) {
+export function InsightsPanel({
+  profile,
+  language,
+}: {
+  profile: ProfileResponse | null;
+  language: Language;
+}) {
+  const c = getCopy(language);
   const t = getTranslator(language);
-
+  const scored =
+    profile?.matches.filter(
+      (match) => typeof match.analysis?.score === "number",
+    ) ?? [];
+  const counts = new Map<InsightId, number>();
+  scored.forEach((match) =>
+    match.analysis?.insights
+      .filter((insight) => insight.tone === "improve")
+      .forEach((insight) =>
+        counts.set(insight.id, (counts.get(insight.id) ?? 0) + 1),
+      ),
+  );
+  const focus = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const roleCounts = new Map<MatchRole, number>();
+  profile?.matches.forEach((match) =>
+    roleCounts.set(match.role, (roleCounts.get(match.role) ?? 0) + 1),
+  );
+  const primaryRole = [...roleCounts].sort((a, b) => b[1] - a[1])[0]?.[0];
   return (
-    <div className="grid min-w-0 content-start gap-5">
-      <Card id="champions">
-        <CardHeader className="space-y-1 p-4">
-          <div className="space-y-1">
-            <SectionLabel>{t("championStats")}</SectionLabel>
-            <CardTitle className="text-lg text-white">{t("mostPlayed")}</CardTitle>
-          </div>
+    <aside className="grid min-w-0 content-start gap-4 md:grid-cols-2 lg:grid-cols-1">
+      <Card
+        id="performance"
+        className="rounded-md border-primary/25 bg-gradient-to-br from-primary/10 to-card shadow-none"
+      >
+        <CardHeader className="p-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="size-4 text-primary" />
+            {c.analysis}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2.5 p-4 pt-0">
-          {profile?.championStats.length ? profile.championStats.map((entry) => (
-            <div key={entry.name} className="grid min-w-0 gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
-              <div className="grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3">
-                <Avatar className="h-10 w-10 rounded-lg border border-white/10">
-                  <AvatarImage src={entry.icon || undefined} alt={entry.name} />
-                  <AvatarFallback className="rounded-lg bg-sky-400/15 text-sm font-semibold text-white">
-                    {entry.name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <strong className="block break-words text-sm font-semibold leading-5 text-white">{entry.name}</strong>
-                  <p className="text-xs leading-4 text-slate-400">{entry.games} {t("games")} • {entry.averageKda} KDA</p>
+        <CardContent className="space-y-4 p-4 pt-0">
+          <p className="text-xs text-muted-foreground">
+            {scored.length} {c.scoredGames}
+          </p>
+          {focus.length ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">{c.improve}</p>
+              {focus.map(([id, count]) => (
+                <div
+                  key={id}
+                  className="flex items-center justify-between gap-2 rounded-md border border-highlight/25 bg-highlight/10 p-2.5"
+                >
+                  <span className="flex items-center gap-2 text-xs text-highlight">
+                    <Lightbulb className="size-3.5 shrink-0" />
+                    {insightCopy(language, id, 0).label}
+                  </span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {count}/{scored.length}
+                  </span>
                 </div>
-              </div>
-              <div className="grid gap-1.5">
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span className="text-slate-400">{t("winRate")}</span>
-                  <strong className="text-white">{entry.winRate}%</strong>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
-                  <div className="h-full rounded-full bg-[linear-gradient(135deg,#2f8cff,#29e3ff,#7a6cff)]" style={{ width: `${entry.winRate}%` }} />
-                </div>
-              </div>
+              ))}
+              <p className="text-xs leading-5 text-muted-foreground">
+                {c.improvementHint}
+              </p>
             </div>
-          )) : <EmptyState title={t("noChampionBreakdown")} description={t("noChampionBreakdownDesc")} />}
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">
+              {scored.length ? c.balanced : c.insufficientData}
+            </p>
+          )}
+          <details className="border-t border-border pt-3">
+            <summary className="cursor-pointer text-xs font-medium text-primary">
+              {c.methodTitle}
+            </summary>
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">
+              {c.method} {c.methodLimits}
+            </p>
+          </details>
         </CardContent>
       </Card>
-
-      <Card id="meta">
-        <CardHeader className="space-y-1 p-4">
-          <div className="space-y-1">
-            <SectionLabel>{t("queueSnapshot")}</SectionLabel>
-            <CardTitle className="text-lg text-white">{t("accountInsights")}</CardTitle>
-          </div>
+      <Card id="champions" className="rounded-md shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="text-base">{c.picks}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2.5 p-4 pt-0">
-          {profile?.meta.length ? profile.meta.map((entry) => (
-            <div key={`${entry.label}-${entry.value}`} className="grid min-w-0 gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
-              <div className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-3">
-                <Avatar className="h-9 w-9 rounded-lg border border-white/10">
-                  <AvatarFallback className="rounded-lg bg-violet-400/15 text-sm font-semibold text-sky-50">
-                    {entry.label[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <strong className="block text-sm font-semibold text-white">{entry.label}</strong>
-                  <p className="text-xs leading-5 text-slate-400">{entry.value}</p>
+        <CardContent className="p-4 pt-0">
+          <div className="divide-y divide-border">
+            {profile?.championStats.length ? (
+              profile.championStats.map((entry) => (
+                <div
+                  key={entry.name}
+                  className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 py-3 first:pt-1 last:pb-0"
+                >
+                  <Avatar className="size-9 rounded-md">
+                    <AvatarImage
+                      src={entry.icon || undefined}
+                      alt={entry.name}
+                    />
+                    <AvatarFallback className="rounded-md text-xs">
+                      {entry.name.slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap justify-between gap-1">
+                      <strong className="text-sm font-semibold">
+                        {entry.name}
+                      </strong>
+                      <span className="text-xs font-semibold tabular-nums text-primary">
+                        {entry.winRate}%
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {entry.games} {t("games")}{" "}
+                      <span className="px-1 text-muted-foreground/40">/</span>{" "}
+                      {entry.averageKda} KDA
+                    </p>
+                    <div className="mt-2 h-1 rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-primary/65"
+                        style={{ width: `${entry.winRate}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <Badge variant="subtle" className="w-fit text-cyan-100">{entry.accent}</Badge>
-            </div>
-          )) : <EmptyState title={t("noQueueInsights")} description={t("noQueueInsightsDesc")} />}
+              ))
+            ) : (
+              <EmptyState
+                title={t("noChampionBreakdown")}
+                description={t("noChampionBreakdownDesc")}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
-    </div>
+      <Card id="meta" className="rounded-md shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Compass className="size-4 text-muted-foreground" />
+            {c.snapshot}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 p-4 pt-0">
+          <div className="flex justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">{c.region}</span>
+            <span>{profile?.profile.region ?? "--"}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">{c.primaryRole}</span>
+            <span>{primaryRole ? laneLabel(language, primaryRole) : "--"}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">{t("matches")}</span>
+            <span>{profile?.matches.length ?? 0}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </aside>
   );
 }

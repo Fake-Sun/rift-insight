@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getTranslator } from "@/components/translations";
 import { defaultProfile } from "@/features/rift-insight/constants";
-import type { FetchProfileArgs, StatusState } from "@/features/rift-insight/types";
+import type {
+  FetchProfileArgs,
+  StatusState,
+} from "@/features/rift-insight/types";
 import type { Language, MatchRole, ProfileResponse, Region } from "@/lib/types";
 
 const LANGUAGE_STORAGE_KEY = "opgg-language";
@@ -24,37 +27,55 @@ function readableErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export function useRiftInsightState(initialLookup?: { gameName: string; tagLine: string; region: Region }) {
+export function useRiftInsightState(initialLookup?: {
+  gameName: string;
+  tagLine: string;
+  region: Region;
+}) {
   const [language, setLanguage] = useState<Language>("en");
-  const [gameName, setGameName] = useState(initialLookup?.gameName ?? defaultProfile.gameName);
-  const [tagLine, setTagLine] = useState(initialLookup?.tagLine ?? defaultProfile.tagLine);
-  const [region, setRegion] = useState<Region>(initialLookup?.region ?? defaultProfile.region);
+  const [gameName, setGameName] = useState(initialLookup?.gameName ?? "");
+  const [tagLine, setTagLine] = useState(initialLookup?.tagLine ?? "");
+  const [region, setRegion] = useState<Region>(
+    initialLookup?.region ?? defaultProfile.region,
+  );
   const [lane, setLane] = useState<"All" | MatchRole>("All");
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [status, setStatus] = useState<StatusState>({
     message: "",
-    type: "info"
+    type: "info",
   });
   const [loading, setLoading] = useState(false);
+  const activeRequest = useRef<AbortController | null>(null);
 
   const t = useMemo(() => getTranslator(language), [language]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored === "en" || stored === "es-LATAM") {
-      setLanguage(stored);
+    try {
+      const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (stored === "en" || stored === "es-LATAM") setLanguage(stored);
+    } catch {
+      /* Language selection still works when browser storage is unavailable. */
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    if (!profile && !loading) {
-      setStatus({ message: t("waiting"), type: "info" });
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    } catch {
+      /* Optional persistence. */
     }
-  }, [language, loading, profile, t]);
+    document.documentElement.lang = language === "en" ? "en" : "es";
+  }, [language]);
 
   useEffect(() => {
-    if (!initialLookup) return;
+    setProfile(null);
+    setStatus({ message: "", type: "info" });
+    if (!initialLookup) {
+      setGameName("");
+      setTagLine("");
+      setLoading(false);
+      return;
+    }
 
     setGameName(initialLookup.gameName);
     setTagLine(initialLookup.tagLine);
@@ -62,14 +83,23 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
     void fetchProfile({ quick: initialLookup }).catch((error) => {
       console.error("Initial profile fetch failed:", error);
     });
+    return () => activeRequest.current?.abort();
   }, [initialLookup?.gameName, initialLookup?.region, initialLookup?.tagLine]);
 
   const filteredMatches = useMemo(() => {
     if (!profile) return [];
-    return lane === "All" ? profile.matches : profile.matches.filter((match) => match.role === lane);
+    return lane === "All"
+      ? profile.matches
+      : profile.matches.filter((match) => match.role === lane);
   }, [lane, profile]);
 
-  async function fetchProfile({ forceRefresh = false, quick }: FetchProfileArgs = {}) {
+  async function fetchProfile({
+    forceRefresh = false,
+    quick,
+  }: FetchProfileArgs = {}) {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     const next = quick || { gameName, tagLine, region };
 
     if (quick) {
@@ -80,33 +110,47 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
 
     setLoading(true);
     setLane("All");
-    setStatus({ message: forceRefresh ? t("refreshing") : t("loading"), type: "info" });
+    setStatus({
+      message: forceRefresh ? t("refreshing") : t("loading"),
+      type: "info",
+    });
 
     try {
       const params = new URLSearchParams(next);
       if (forceRefresh) params.set("refresh", "1");
 
-      const response = await fetch(`/api/profile?${params.toString()}`);
+      const response = await fetch(`/api/profile?${params.toString()}`, {
+        signal: controller.signal,
+      });
       const payload = (await response.json().catch(() => ({
-        error: "Failed to load profile."
+        error: "Failed to load profile.",
       }))) as ProfileResponse | ApiErrorPayload;
+      if (controller.signal.aborted) return;
 
       if (!response.ok || "error" in payload) {
-        const errorPayload = ("error" in payload ? payload : { error: "Failed to load profile." }) as ApiErrorPayload;
+        const errorPayload = (
+          "error" in payload ? payload : { error: "Failed to load profile." }
+        ) as ApiErrorPayload;
         let message = errorPayload.error;
 
         if (errorPayload.code === "RIOT_API_KEY_MISSING") {
           message = t("apiKeyMissing");
-        } else if (errorPayload.code === "RIOT_API_FORBIDDEN" || errorPayload.code === "RIOT_API_UNAUTHORIZED") {
+        } else if (
+          errorPayload.code === "RIOT_API_FORBIDDEN" ||
+          errorPayload.code === "RIOT_API_UNAUTHORIZED"
+        ) {
           message = t("apiKeyInvalid");
-        } else if (errorPayload.code === "RIOT_API_RATE_LIMIT" || response.status === 429) {
+        } else if (
+          errorPayload.code === "RIOT_API_RATE_LIMIT" ||
+          response.status === 429
+        ) {
           message = t("apiRateLimited");
         }
 
-        setProfile(null);
+        if (!forceRefresh) setProfile(null);
         setStatus({
           message,
-          type: "error"
+          type: "error",
         });
         return;
       }
@@ -114,16 +158,17 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
       setProfile(payload);
       setStatus({
         message: `${forceRefresh ? t("refreshed") : t("loaded")} ${payload.profile.gameName}#${payload.profile.tagLine} ${t("from")} ${payload.profile.region}.`,
-        type: "success"
+        type: "success",
       });
     } catch (error) {
-      setProfile(null);
+      if (controller.signal.aborted) return;
+      if (!forceRefresh) setProfile(null);
       setStatus({
         message: readableErrorMessage(error, t("profileUnavailable")),
-        type: "error"
+        type: "error",
       });
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }
 
@@ -143,6 +188,6 @@ export function useRiftInsightState(initialLookup?: { gameName: string; tagLine:
     setTagLine,
     status,
     t,
-    tagLine
+    tagLine,
   };
 }

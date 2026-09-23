@@ -1,0 +1,48 @@
+.scoreboard {
+  container-type: inline-size;
+  display: grid;
+  gap: 12px;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px 60px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--color-border);
+  background: #ffffff02;
+}
+.heading {
+  padding-block: 6px;
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+.heading > :nth-child(2) {
+  text-align: center;
+}
+.heading > :nth-child(3) {
+  text-align: right;
+}
+.build {
+  grid-column: 1 / -1;
+}
+.buildHeading {
+  display: none;
+}
+.currentPlayer {
+  background: #70e1d509;
+  box-shadow: inset 2px 0 #70e1d560;
+}
+@container (min-width: 610px) {
+  .row {
+    grid-template-columns: minmax(150px, 1fr) 86px 100px 200px;
+    gap: 16px;
+    padding-inline: 12px;
+  }
+  .build {
+    grid-column: auto;
+  }
+  .buildHeading {
+    display: block;
+  }
+}

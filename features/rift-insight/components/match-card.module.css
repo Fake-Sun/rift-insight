@@ -1,0 +1,307 @@
+.card {
+  container-type: inline-size;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--result) 24%, #122344);
+  border-left: 4px solid var(--result);
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--result) 15%, #07101e),
+    #0c142b 58%,
+    #101b34
+  );
+  box-shadow:
+    -3px 0 16px -8px var(--result),
+    inset 0 1px #ffffff05;
+}
+.win {
+  --result: var(--victory);
+}
+.loss {
+  --result: var(--defeat);
+}
+.compact {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(82px, 1fr) minmax(83px, 1fr);
+  grid-template-areas: "result result toggle" "champion kda metrics" "build build extra" "meta meta meta" "feedback feedback feedback";
+  gap: 6px 7px;
+  align-items: center;
+  padding: 8px 10px;
+}
+.result {
+  grid-area: result;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+.queue {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 650;
+  color: var(--result);
+}
+.outcome {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: var(--result);
+  background: color-mix(in srgb, var(--result) 14%, transparent);
+}
+.champion {
+  grid-area: champion;
+  min-width: 0;
+}
+.champion h4 {
+  margin-bottom: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.portrait {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.championIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--result) 75%, transparent),
+    0 0 14px color-mix(in srgb, var(--result) 16%, transparent);
+}
+.kda {
+  grid-area: kda;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.kda p {
+  white-space: nowrap;
+  color: var(--foreground);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+.kda p > span:not(:nth-child(2)) {
+  color: #728bb8;
+  font-weight: 400;
+}
+.kda > span {
+  display: block;
+  margin-top: 2px;
+}
+.kda strong {
+  color: var(--foreground);
+}
+.kda .role {
+  margin-top: 4px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.metrics {
+  grid-area: metrics;
+  display: grid;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.metrics > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 4px;
+  line-height: 1.25;
+}
+.metrics dd {
+  order: -1;
+  font-size: 13px;
+  font-weight: 650;
+}
+.metrics dt {
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+}
+.extraMetrics {
+  grid-area: extra;
+}
+.build {
+  grid-area: build;
+  min-width: 0;
+}
+.itemGrid {
+  display: flex;
+  gap: 3px;
+}
+.itemGrid > * {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+.roster {
+  display: none;
+  min-width: 0;
+}
+.meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: #a5b9db;
+  font-size: 11px;
+  font-weight: 500;
+}
+.meta > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.metaStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+}
+.feedback {
+  grid-area: feedback;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  border-top: 1px solid #ffffff0b;
+  padding-top: 6px;
+}
+.detailsButton {
+  grid-area: toggle;
+  justify-self: end;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border-radius: 4px;
+  color: var(--result);
+  background: color-mix(in srgb, var(--result) 10%, transparent);
+}
+.detailsButton:hover {
+  background: color-mix(in srgb, var(--result) 22%, transparent);
+  color: white;
+}
+@container (min-width: 500px) {
+  .compact {
+    grid-template-columns: 100px minmax(86px, 1fr) minmax(80px, 1fr) 105px 24px;
+    grid-template-areas: "result result result result toggle" "champion kda metrics build toggle" "meta meta extra extra toggle" "feedback feedback feedback feedback toggle";
+    padding: 8px 10px;
+  }
+  .extraMetrics {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .itemGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 24px);
+    gap: 3px;
+  }
+  .itemGrid > :nth-child(4) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .itemGrid > :nth-child(5) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .itemGrid > :nth-child(6) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .itemGrid > :nth-child(7) {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .feedback {
+    border: 0;
+    padding: 0;
+  }
+  .detailsButton {
+    width: 26px;
+    height: 100%;
+    align-self: stretch;
+  }
+}
+@container (min-width: 620px) {
+  .compact {
+    grid-template-columns: 80px 100px 84px 76px minmax(66px, 1fr) 105px 24px;
+    grid-template-areas: "result champion kda metrics extra build toggle" "meta meta meta feedback feedback feedback toggle";
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .extraMetrics {
+    display: grid;
+    gap: 3px;
+  }
+  .result {
+    display: grid;
+    justify-items: start;
+    gap: 5px;
+  }
+  .detailsButton {
+    width: 24px;
+  }
+}
+@container (min-width: 800px) {
+  .compact {
+    grid-template-columns: 84px 100px 84px 78px 68px 105px minmax(
+        150px,
+        1fr
+      ) 24px;
+    grid-template-areas: "result champion kda metrics extra build roster toggle" "meta meta meta feedback feedback feedback roster toggle";
+    gap: 6px;
+  }
+  .result {
+    display: grid;
+    justify-items: start;
+    gap: 5px;
+  }
+  .outcome {
+    font-size: 11px;
+  }
+  .roster {
+    display: block;
+    grid-area: roster;
+    padding-left: 4px;
+    border-left: 1px solid #ffffff0b;
+  }
+  .detailsButton {
+    width: 24px;
+  }
+}
+@container (min-width: 1040px) {
+  .compact {
+    grid-template-columns: 88px 106px 90px 86px 76px 113px minmax(
+        170px,
+        1fr
+      ) 24px;
+    gap: 6px 8px;
+  }
+  .queue,
+  .champion h4 {
+    font-size: 13px;
+  }
+  .metrics dt {
+    font-size: 11px;
+  }
+  .itemGrid {
+    grid-template-columns: repeat(4, 26px);
+  }
+  .itemGrid > * {
+    width: 26px;
+    height: 26px;
+  }
+}

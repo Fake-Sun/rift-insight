@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ProfileResponse } from "@/lib/types";
+import { analyzeMatch } from "@/lib/match-analysis";
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY || "";
 const MATCH_COUNT = 30;
@@ -534,6 +535,7 @@ export async function getLiveProfile(
         metadata: { matchId: string };
         info: {
           queueId: number;
+          mapId: number;
           gameDuration: number;
           gameEndTimestamp?: number;
           gameCreation: number;
@@ -610,6 +612,13 @@ export async function getLiveProfile(
 
       return {
         matchId: match.metadata.matchId,
+        analysis: analyzeMatch({
+          queueId: match.info.queueId,
+          mapId: match.info.mapId,
+          durationSeconds: match.info.gameDuration,
+          participant,
+          participants: match.info.participants
+        }),
         queueId: match.info.queueId,
         championName,
         championIcon: champion ? championIconUrl(championCatalog.version, champion.id) : "",
